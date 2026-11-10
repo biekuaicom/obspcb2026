@@ -289,3 +289,109 @@ def test_wavy_board_edge_is_pulled_toward_a_line():
     assert stats["kind"] in {"line", "arc"}
     assert stats["rms_before"] is not None and stats["rms_before"] > 1.2
     assert stats["rms_after"] < stats["rms_before"] * 0.6
+
+
+def _connected_regions(mask):
+    count, _labels = cv2.connectedComponents((mask > 0).astype(np.uint8), connectivity=8)
+    return int(count) - 1
+
+
+def test_coverage_memory_grows_with_overlapping_shots_and_stays_connected():
+    from vision.stable_capture import evaluate_coverage_growth, unexplained_coverage_blobs
+
+    board = _board(height=240, width=460)
+    views = [
+        board[24:150, 20:170],
+        board[24:150, 36:186],
+        board[24:150, 52:202],
+    ]
+    session = StableCaptureSession(min_overlap=0.08)
+    session.start()
+    areas = []
+    for view in views:
+        _settle(session, view)
+        decision = session.capture()
+        assert decision.ok is True
+        memory = session.coverage_memory
+        assert memory is not None
+        areas.append(memory.area)
+        assert memory.area > 0
+        assert memory.contour
+        assert _connected_regions(memory.mask) == 1
+
+    tile_area = views[0].shape[0] * views[0].shape[1]
+    assert areas[0] == areas[0]  # first shot records a baseline
+    assert areas[1] > areas[0]
+    assert areas[2] > areas[1]
+    assert (areas[1] - areas[0]) < tile_area
+    assert (areas[2] - areas[1]) < tile_area
+
+    payload = session.chain_dict()
+    assert payload["tiles"][0]["id"] == "cap-000"
+    assert payload["coverage_memory"]["area"] == areas[-1]
+    assert "contour" in payload["coverage_memory"]
+    assert "moments" in payload["coverage_memory"]
+    assert len(payload["structure_tree"]) == 3
+
+    # Edge-level dilation is normal boundary fluctuation, not a false block.
+    memory = session.coverage_memory
+    slack = cv2.dilate(memory.mask, np.ones((5, 5), np.uint8), iterations=1)
+    blobs = unexplained_coverage_blobs(
+        slack,
+        memory.origin,
+        memory.mask,
+        memory.origin,
+        slack_px=3,
+        min_area=400,
+    )
+    assert int(np.count_nonzero(blobs)) == 0
+
+    # A large far-away island, or a tile scaled beyond one frame, is rejected
+    # and must leave the remembered area unchanged.
+    recorded = memory.area
+    island = evaluate_coverage_growth(memory, views[0].shape[1], views[0].shape[0], _translate_m(420, 16))
+    assert island.ok is False
+    assert "孤立" in island.reason
+    scaled = np.array([[3.0, 0.0, 8.0], [0.0, 3.0, 10.0]], dtype=np.float64)
+    too_big = evaluate_coverage_growth(memory, views[0].shape[1], views[0].shape[0], scaled)
+    assert too_big.ok is False
+    assert "面积" in too_big.reason
+    assert session.coverage_memory.area == recorded
+
+
+def test_coverage_memory_rejects_bad_pose_on_capture_and_stays_unchanged():
+    from dataclasses import replace
+    from vision.stable_capture import _compose_m, _invert_m
+
+    board = _board(height=240, width=460)
+    window = board[24:150, 20:160]
+    shifted = board[24:150, 44:184]
+    session = StableCaptureSession(min_overlap=0.08)
+    session.start()
+    _settle(session, window)
+    assert session.capture().ok is True
+    remembered = session.coverage_memory.area
+    _settle(session, shifted)
+    assert session._tracked is True and session._pose is not None
+    anchor = next(tile for tile in session.tiles if tile.tile_id == session._anchor_id)
+    desired = _translate_m(420, 18)
+    inv_pose = _compose_m(_invert_m(anchor.M_to_ref), desired)
+    session._pose = replace(session._pose, M=_invert_m(inv_pose))
+    rejected = session.capture()
+    assert rejected.ok is False
+    assert "退回" in rejected.reason
+    assert len(session.tiles) == 1
+    assert session.coverage_memory.area == remembered
+
+    # A scaled pose that would add more than one frame of coverage is also rejected.
+    _settle(session, shifted)
+    assert session._tracked is True and session._pose is not None
+    anchor = next(tile for tile in session.tiles if tile.tile_id == session._anchor_id)
+    scaled = np.array([[0.3, 0.0, 0.0], [0.0, 0.3, 0.0]], dtype=np.float64)
+    # M_to_ref = anchor.M_to_ref @ inv(pose.M); small pose scale => large tile in chain space.
+    session._pose = replace(session._pose, M=_compose_m(session._pose.M, scaled))
+    rejected_scale = session.capture()
+    assert rejected_scale.ok is False
+    assert "退回" in rejected_scale.reason
+    assert len(session.tiles) == 1
+    assert session.coverage_memory.area == remembered

@@ -22,6 +22,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from vision.structure_tree import extract_structure_tree
 from vision.topology import (
     SCHEMA_VERSION,
     ConstellationMatcher,
@@ -38,6 +39,8 @@ _LOST = "未能跟上已拍区域，请退回红色覆盖处重拍"
 _ACCEPTED = "已拍摄"
 _READY = "稳定，可以拍摄"
 _READY_OVERLAP = "重叠足够，可以拍摄"
+_COVERAGE_AREA = "覆盖面积变化异常，请退回重拍"
+_COVERAGE_ISLAND = "覆盖出现孤立区块，请退回重拍"
 
 OVERVIEW_MAX_SIDE = 3200
 OVERVIEW_MAX_PIXELS = 8_000_000
@@ -57,6 +60,13 @@ _MIN_INFRAME_SUPPORT_POINTS = 3
 _MIN_SUPPORT_RATIO = 0.25
 _SLIVER_VISIBLE_FRACTION = 0.15
 _COVERAGE_TOUCH_PX = 2
+
+# Coverage memory lives in the chain / board frame, not the live camera frame.
+# Area and shape may only grow like one new connected tile, plus thin edge slack.
+_COVERAGE_EDGE_SLACK_PX = 3
+_COVERAGE_GROW_MARGIN = 0.12
+_COVERAGE_BLOB_FRAC = 0.04
+_COVERAGE_BLOB_MIN_PX = 400
 
 
 @dataclass
@@ -118,6 +128,36 @@ class _Tile:
     edge_stats: dict | None = None
     edge_before: np.ndarray | None = None
     edge_after: np.ndarray | None = None
+    structure: object | None = None
+
+
+@dataclass
+class CoverageMemory:
+    """Remembered red coverage in chain / ref coordinates."""
+
+    area: int
+    origin: tuple[int, int]
+    mask: np.ndarray
+    contour: list[list[float]]
+    bbox: tuple[int, int, int, int]
+    moments: dict[str, float]
+
+    def to_dict(self) -> dict:
+        return {
+            "area": int(self.area),
+            "origin": [int(self.origin[0]), int(self.origin[1])],
+            "bbox": [int(value) for value in self.bbox],
+            "moments": {str(key): float(value) for key, value in self.moments.items()},
+            "contour": [[float(point[0]), float(point[1])] for point in self.contour],
+        }
+
+
+@dataclass
+class CoverageCheck:
+    ok: bool
+    reason: str
+    memory: CoverageMemory | None = None
+    added: int = 0
 
 
 @dataclass
@@ -182,6 +222,7 @@ class StableCaptureSession:
         self._overview_scale = 1.0
         self._overview_version = 0
         self.overview_refine_count = 0
+        self._coverage_memory: CoverageMemory | None = None
 
     def start(self) -> None:
         self.started = True
@@ -210,6 +251,7 @@ class StableCaptureSession:
         self._overview_scale = 1.0
         self._overview_version = 0
         self.overview_refine_count = 0
+        self._coverage_memory = None
 
     def observe(self, frame: np.ndarray) -> ObserveState:
         sharpness = frame_sharpness(frame)
@@ -277,7 +319,16 @@ class StableCaptureSession:
         overlap = float(self._overlap or 0.0)
         if overlap < self.min_overlap:
             return self._reject(_NO_OVERLAP, overlap=overlap, elapsed_ms=self._track_ms or 0.0)
-        tile = self._store_tile(frame, self._anchor_id, self._pose.M)
+        candidate_m = self._candidate_m_to_ref(self._anchor_id, self._pose.M)
+        coverage = evaluate_coverage_growth(
+            self._coverage_memory,
+            int(frame.shape[1]),
+            int(frame.shape[0]),
+            candidate_m,
+        )
+        if not coverage.ok:
+            return self._reject(coverage.reason, overlap=overlap, elapsed_ms=self._track_ms or 0.0)
+        tile = self._store_tile(frame, self._anchor_id, self._pose.M, coverage_check=coverage)
         return CaptureDecision(
             True,
             _ACCEPTED,
@@ -326,6 +377,11 @@ class StableCaptureSession:
             ],
             "edges": self.edges,
             "rejects": self.rejects,
+            "coverage_memory": None if self._coverage_memory is None else self._coverage_memory.to_dict(),
+            "structure_tree": [
+                None if getattr(tile, "structure", None) is None else tile.structure.to_dict()
+                for tile in self.tiles
+            ],
         }
 
     def topology_db(self, *, board_id: str, source: str) -> dict:
@@ -383,6 +439,7 @@ class StableCaptureSession:
             height,
             primary_index=primary.index,
         )
+        self._quads = self._filter_quads_by_coverage_memory(self._quads, ref_to_frame, width, height)
         self._polygon = self._quads[-1] if self._quads else None
         self._overlap = union_overlap_ratio(self._quads, width, height)
         self._tracked = True
@@ -510,9 +567,16 @@ class StableCaptureSession:
             quads.append(project_tile_quad(tile_to_frame, tile.width, tile.height))
         return quads
 
-    def _store_tile(self, frame: np.ndarray, parent: str | None, pose_m: np.ndarray | None) -> _Tile:
+    def _store_tile(
+        self,
+        frame: np.ndarray,
+        parent: str | None,
+        pose_m: np.ndarray | None,
+        coverage_check: CoverageCheck | None = None,
+    ) -> _Tile:
         extracted = self.extractor.extract(frame)
         extracted.board_id = f"cap-{len(self.tiles):03d}"
+        structure = extract_structure_tree(frame)
         tile = _Tile(
             tile_id=extracted.board_id,
             width=int(frame.shape[1]),
@@ -521,6 +585,7 @@ class StableCaptureSession:
             binary=binary_lines(frame),
             points=[point.to_dict() for point in extracted.points],
             extracted=extracted,
+            structure=structure,
         )
         if parent is None or pose_m is None:
             tile.M_to_ref = _identity_m()
@@ -561,15 +626,83 @@ class StableCaptureSession:
             self.edges[-1]["merge_ms"] = round(merge_ms, 2)
         self.matcher.set_topology(extracted)
         self._anchor_id = tile.tile_id
+        self._commit_coverage_memory(tile, coverage_check)
         self._pose_after_capture(tile)
         return tile
 
     def _pose_after_capture(self, tile: _Tile) -> None:
         """The shutter frame is the new tile, so every earlier tile can be drawn at once."""
         self._quads = self._quads_from_anchor(tile, _identity_m())
+        if self._coverage_memory is not None and self._quads:
+            ref_to_frame = _compose_m(_identity_m(), _invert_m(tile.M_to_ref))
+            self._quads = self._filter_quads_by_coverage_memory(
+                self._quads,
+                ref_to_frame,
+                tile.width,
+                tile.height,
+            )
         self._polygon = self._quads[-1] if self._quads else None
         self._overlap = 1.0
         self._tracked = True
+
+    def _candidate_m_to_ref(self, parent: str, pose_m: np.ndarray) -> np.ndarray:
+        anchor = next(item for item in self.tiles if item.tile_id == parent)
+        return _compose_m(anchor.M_to_ref, _invert_m(np.asarray(pose_m, dtype=np.float64)))
+
+    def _commit_coverage_memory(self, tile: _Tile, coverage_check: CoverageCheck | None) -> None:
+        if coverage_check is not None and coverage_check.ok and coverage_check.memory is not None:
+            self._coverage_memory = coverage_check.memory
+            return
+        self._coverage_memory = build_coverage_memory(
+            self._coverage_memory,
+            tile.width,
+            tile.height,
+            tile.M_to_ref,
+        )
+
+    def _filter_quads_by_coverage_memory(
+        self,
+        quads: list[np.ndarray],
+        ref_to_frame: np.ndarray,
+        width: int,
+        height: int,
+    ) -> list[np.ndarray]:
+        """Drop sudden extra red blocks that the remembered world shape cannot explain."""
+        memory = self._coverage_memory
+        if memory is None or memory.area <= 0 or not quads or width <= 1 or height <= 1:
+            return quads
+        projected = project_coverage_memory(memory, ref_to_frame, width, height)
+        if not np.any(projected):
+            return quads
+        actual = np.zeros((height, width), dtype=np.uint8)
+        for quad in quads:
+            _fill_quad(actual, quad)
+        tile_area = int(self.tiles[0].width * self.tiles[0].height) if self.tiles else width * height
+        min_area = _coverage_blob_min_area(tile_area)
+        blobs = unexplained_coverage_blobs(
+            actual,
+            (0, 0),
+            projected,
+            (0, 0),
+            slack_px=_COVERAGE_EDGE_SLACK_PX,
+            min_area=min_area,
+        )
+        if not np.any(blobs):
+            return quads
+        kept: list[np.ndarray] = []
+        for quad in quads:
+            probe = np.zeros((height, width), dtype=np.uint8)
+            _fill_quad(probe, quad)
+            extra = int(np.count_nonzero((probe > 0) & (blobs > 0)))
+            visible = int(np.count_nonzero(probe))
+            if extra >= min_area and visible > 0 and extra >= int(0.2 * visible):
+                continue
+            kept.append(quad)
+        return kept
+
+    @property
+    def coverage_memory(self) -> CoverageMemory | None:
+        return self._coverage_memory
 
     def _fuse_chain_mask(self, tile: _Tile) -> None:
         """OR this tile's binary into a chain-sized mask. It grows only with captured tiles."""
@@ -1279,6 +1412,229 @@ def _tile_is_trusted_in_view(
         return hits >= n_in
     needed = max(_MIN_INFRAME_SUPPORT_POINTS, int(np.ceil(_MIN_SUPPORT_RATIO * n_in)))
     return hits >= needed
+
+
+def _coverage_kernel(radius: int) -> np.ndarray:
+    size = 2 * max(1, int(radius)) + 1
+    return np.ones((size, size), dtype=np.uint8)
+
+
+def _coverage_blob_min_area(tile_area: int) -> int:
+    return max(_COVERAGE_BLOB_MIN_PX, int(np.ceil(_COVERAGE_BLOB_FRAC * max(1, int(tile_area)))))
+
+
+def _edge_slack_area(mask: np.ndarray, slack_px: int) -> int:
+    if mask is None or not np.any(mask):
+        return 0
+    eroded = cv2.erode(mask, _coverage_kernel(slack_px), iterations=1)
+    return int(np.count_nonzero(mask) - np.count_nonzero(eroded))
+
+
+def _place_coverage_mask(
+    mask: np.ndarray,
+    origin: tuple[int, int],
+    new_origin: tuple[int, int],
+    size: tuple[int, int],
+) -> np.ndarray:
+    canvas = np.zeros((int(size[1]), int(size[0])), dtype=np.uint8)
+    if mask is None or mask.size == 0 or size[0] <= 0 or size[1] <= 0:
+        return canvas
+    dx = int(origin[0] - new_origin[0])
+    dy = int(origin[1] - new_origin[1])
+    height, width = mask.shape[:2]
+    x0 = max(0, dx)
+    y0 = max(0, dy)
+    sx = max(0, -dx)
+    sy = max(0, -dy)
+    copy_w = min(width - sx, int(size[0]) - x0)
+    copy_h = min(height - sy, int(size[1]) - y0)
+    if copy_w > 0 and copy_h > 0:
+        canvas[y0 : y0 + copy_h, x0 : x0 + copy_w] = mask[sy : sy + copy_h, sx : sx + copy_w]
+    return canvas
+
+
+def _align_coverage_masks(
+    left: np.ndarray,
+    left_origin: tuple[int, int],
+    right: np.ndarray,
+    right_origin: tuple[int, int],
+) -> tuple[np.ndarray, np.ndarray, tuple[int, int]]:
+    min_x = min(int(left_origin[0]), int(right_origin[0]))
+    min_y = min(int(left_origin[1]), int(right_origin[1]))
+    max_x = max(int(left_origin[0] + left.shape[1]), int(right_origin[0] + right.shape[1]))
+    max_y = max(int(left_origin[1] + left.shape[0]), int(right_origin[1] + right.shape[1]))
+    size = (max_x - min_x, max_y - min_y)
+    left_aligned = _place_coverage_mask(left, left_origin, (min_x, min_y), size)
+    right_aligned = _place_coverage_mask(right, right_origin, (min_x, min_y), size)
+    return left_aligned, right_aligned, (min_x, min_y)
+
+
+def _significant_coverage_components(mask: np.ndarray, min_area: int) -> np.ndarray:
+    if mask is None or mask.size == 0 or not np.any(mask):
+        return np.zeros((0, 0) if mask is None or mask.size == 0 else mask.shape, dtype=np.uint8)
+    count, labels, stats, _centroids = cv2.connectedComponentsWithStats((mask > 0).astype(np.uint8), connectivity=8)
+    out = np.zeros(mask.shape, dtype=np.uint8)
+    for label in range(1, count):
+        if int(stats[label, cv2.CC_STAT_AREA]) >= int(min_area):
+            out[labels == label] = 255
+    return out
+
+
+def unexplained_coverage_blobs(
+    actual: np.ndarray,
+    actual_origin: tuple[int, int],
+    expected: np.ndarray,
+    expected_origin: tuple[int, int],
+    *,
+    slack_px: int = _COVERAGE_EDGE_SLACK_PX,
+    min_area: int = _COVERAGE_BLOB_MIN_PX,
+) -> np.ndarray:
+    """Large blobs in ``actual`` that expected coverage plus edge slack cannot explain."""
+    actual_aligned, expected_aligned, _origin = _align_coverage_masks(
+        actual, actual_origin, expected, expected_origin
+    )
+    dilated = cv2.dilate(expected_aligned, _coverage_kernel(slack_px), iterations=1)
+    extra = np.where((actual_aligned > 0) & (dilated == 0), np.uint8(255), np.uint8(0))
+    return _significant_coverage_components(extra, min_area)
+
+
+def summarize_coverage_mask(mask: np.ndarray, origin: tuple[int, int]) -> CoverageMemory:
+    area = int(np.count_nonzero(mask))
+    origin_x, origin_y = int(origin[0]), int(origin[1])
+    bbox = (origin_x, origin_y, 0, 0)
+    contour: list[list[float]] = []
+    moments = {"m00": 0.0, "cx": float(origin_x), "cy": float(origin_y)}
+    if area > 0:
+        x, y, width, height = cv2.boundingRect((mask > 0).astype(np.uint8))
+        bbox = (origin_x + int(x), origin_y + int(y), int(width), int(height))
+        raw = cv2.moments((mask > 0).astype(np.uint8))
+        cx = (raw["m10"] / raw["m00"] + origin_x) if raw["m00"] else float(origin_x)
+        cy = (raw["m01"] / raw["m00"] + origin_y) if raw["m00"] else float(origin_y)
+        moments = {
+            "m00": float(raw["m00"]),
+            "m10": float(raw["m10"]),
+            "m01": float(raw["m01"]),
+            "mu20": float(raw["mu20"]),
+            "mu11": float(raw["mu11"]),
+            "mu02": float(raw["mu02"]),
+            "cx": float(cx),
+            "cy": float(cy),
+        }
+        contours, _hierarchy = cv2.findContours(
+            (mask > 0).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
+        if contours:
+            best = max(contours, key=cv2.contourArea)
+            perimeter = cv2.arcLength(best, True)
+            approx = cv2.approxPolyDP(best, max(1.5, 0.008 * perimeter), True)
+            contour = [
+                [round(float(point[0][0] + origin_x), 2), round(float(point[0][1] + origin_y), 2)]
+                for point in approx
+            ]
+    return CoverageMemory(
+        area=area,
+        origin=(origin_x, origin_y),
+        mask=np.ascontiguousarray(mask.copy()),
+        contour=contour,
+        bbox=bbox,
+        moments=moments,
+    )
+
+
+def build_coverage_memory(
+    memory: CoverageMemory | None,
+    tile_width: int,
+    tile_height: int,
+    M_to_ref: np.ndarray,
+    *,
+    pad: int = 2,
+) -> CoverageMemory:
+    """OR a tile footprint into chain-space coverage. First shot starts a new mask."""
+    quad = project_tile_quad(M_to_ref, tile_width, tile_height)
+    if not np.isfinite(quad).all():
+        if memory is not None:
+            return memory
+        return summarize_coverage_mask(np.zeros((1, 1), dtype=np.uint8), (0, 0))
+    min_x = int(np.floor(np.min(quad[:, 0]))) - pad
+    min_y = int(np.floor(np.min(quad[:, 1]))) - pad
+    max_x = int(np.ceil(np.max(quad[:, 0]))) + pad + 1
+    max_y = int(np.ceil(np.max(quad[:, 1]))) + pad + 1
+    if memory is not None and memory.mask is not None:
+        origin_x, origin_y = memory.origin
+        min_x = min(min_x, origin_x)
+        min_y = min(min_y, origin_y)
+        max_x = max(max_x, origin_x + memory.mask.shape[1])
+        max_y = max(max_y, origin_y + memory.mask.shape[0])
+        canvas = _place_coverage_mask(memory.mask, memory.origin, (min_x, min_y), (max_x - min_x, max_y - min_y))
+    else:
+        canvas = np.zeros((max_y - min_y, max_x - min_x), dtype=np.uint8)
+    shifted = np.asarray(quad, dtype=np.float64).copy()
+    shifted[:, 0] -= min_x
+    shifted[:, 1] -= min_y
+    _fill_quad(canvas, shifted)
+    return summarize_coverage_mask(canvas, (min_x, min_y))
+
+
+def evaluate_coverage_growth(
+    memory: CoverageMemory | None,
+    tile_width: int,
+    tile_height: int,
+    M_to_ref: np.ndarray,
+    *,
+    slack_px: int = _COVERAGE_EDGE_SLACK_PX,
+) -> CoverageCheck:
+    """Accept a candidate tile only if chain-space coverage grows like one connected frame."""
+    proposed = build_coverage_memory(memory, tile_width, tile_height, M_to_ref)
+    if memory is None or memory.area <= 0:
+        return CoverageCheck(True, "", memory=proposed, added=proposed.area)
+    tile_area = int(max(1, int(tile_width) * int(tile_height)))
+    added = int(proposed.area - memory.area)
+    shrink_slack = max(_edge_slack_area(memory.mask, slack_px), int(slack_px))
+    grow_margin = max(
+        int(np.ceil(_COVERAGE_GROW_MARGIN * tile_area)),
+        _edge_slack_area(proposed.mask, slack_px),
+    )
+    if added < -shrink_slack:
+        return CoverageCheck(False, _COVERAGE_AREA, memory=proposed, added=added)
+    if added > tile_area + grow_margin:
+        return CoverageCheck(False, _COVERAGE_AREA, memory=proposed, added=added)
+    old_aligned, new_aligned, _ = _align_coverage_masks(
+        memory.mask, memory.origin, proposed.mask, proposed.origin
+    )
+    dilated_old = cv2.dilate(old_aligned, _coverage_kernel(slack_px), iterations=1)
+    count, labels, stats, _centroids = cv2.connectedComponentsWithStats(
+        (new_aligned > 0).astype(np.uint8), connectivity=8
+    )
+    min_blob = _coverage_blob_min_area(tile_area)
+    for label in range(1, count):
+        if int(stats[label, cv2.CC_STAT_AREA]) < min_blob:
+            continue
+        if not np.any((labels == label) & (dilated_old > 0)):
+            return CoverageCheck(False, _COVERAGE_ISLAND, memory=proposed, added=added)
+    # The capture candidate is already (old_union OR new_tile) in chain space.
+    # Symmetric-difference blobs against a drifted live painting are handled in
+    # _filter_quads_by_coverage_memory, which compares against this memory.
+    return CoverageCheck(True, "", memory=proposed, added=added)
+
+
+def project_coverage_memory(
+    memory: CoverageMemory,
+    ref_to_frame: np.ndarray,
+    width: int,
+    height: int,
+) -> np.ndarray:
+    """Warp remembered chain-space coverage into the current live view."""
+    if memory is None or memory.mask is None or width <= 1 or height <= 1:
+        return np.zeros((max(0, height), max(0, width)), dtype=np.uint8)
+    mask_to_frame = _compose_m(ref_to_frame, _translate_m(memory.origin[0], memory.origin[1]))
+    return cv2.warpAffine(
+        memory.mask,
+        np.asarray(mask_to_frame, dtype=np.float64),
+        (int(width), int(height)),
+        flags=cv2.INTER_NEAREST,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=0,
+    )
 
 
 def _fill_quad(mask: np.ndarray, quad: np.ndarray) -> None:
