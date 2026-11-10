@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -31,6 +32,13 @@ from vision.stable_capture import (
 )
 
 FrameProvider = Callable[[], np.ndarray | None]
+SourceStatus = Callable[[], tuple[str, str]]
+
+_IDLE_STATUS = "点击「开始扫描」。稳定后会自动拍下第一张。"
+_LIVE_STATUS = "已显示实时画面。点击「开始扫描」。稳定后会自动拍下第一张。"
+_WAIT_STATUS = "正在等待第一帧画面。"
+_DEFAULT_HINT = "红色半透明区域 = 已拍摄覆盖。重叠不足会被拒绝，请退回红区再拍。"
+_PREVIEW_WAIT_S = 5.0
 
 _STYLE = """
 QDialog, QLabel, QPushButton, QFrame {
@@ -89,14 +97,23 @@ def _pixmap_from_bgr(image: np.ndarray, max_width: int, max_height: int) -> QPix
 class ScanWorkbenchDialog(QDialog):
     """Interactive stable-capture workbench with a live overview thumbnail."""
 
-    def __init__(self, frame_provider: FrameProvider, parent=None, *, board_id: str = "SCAN-BOARD"):
+    def __init__(
+        self,
+        frame_provider: FrameProvider,
+        parent=None,
+        *,
+        board_id: str = "SCAN-BOARD",
+        source_status: SourceStatus | None = None,
+    ):
         super().__init__(parent)
         self.setWindowTitle("扫描建图")
         self.setModal(True)
         self.resize(1180, 760)
         self.setStyleSheet(_STYLE)
         self.frame_provider = frame_provider
+        self.source_status = source_status
         self.board_id = board_id
+        self._preview_wait_t0: float | None = None
         self.session = StableCaptureSession()
         self._running = False
         self._first_auto_done = False
@@ -123,7 +140,8 @@ class ScanWorkbenchDialog(QDialog):
         subtitle = QLabel(
             "停在清晰稳定的画面拍第一张，移动时让红色覆盖还留在画面里再拍下一张。"
             "右侧会立刻把每张彩色关键帧拼进整板总览（受约束的低分辨率预览，不是全分辨率画布）。"
-            "没有摄像头时，请用「使用样例画面」或「一键演示（样例）」。"
+            "没有摄像头、打开失败或超时时会自动改用合成帧，并在右侧说明原因；"
+            "也可以点「使用样例画面」或「一键演示（样例）」。"
         )
         subtitle.setObjectName("hint")
         subtitle.setWordWrap(True)
@@ -131,9 +149,10 @@ class ScanWorkbenchDialog(QDialog):
         self.live_view = QLabel("等待画面…")
         self.live_view.setObjectName("live")
         self.live_view.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.live_view.setWordWrap(True)
         self.live_view.setMinimumSize(640, 420)
         left.addWidget(self.live_view, 1)
-        self.live_hint = QLabel("红色半透明区域 = 已拍摄覆盖。重叠不足会被拒绝，请退回红区再拍。")
+        self.live_hint = QLabel(_DEFAULT_HINT)
         self.live_hint.setObjectName("hint")
         self.live_hint.setWordWrap(True)
         left.addWidget(self.live_hint)
@@ -147,7 +166,7 @@ class ScanWorkbenchDialog(QDialog):
         status_title = QLabel("扫描状态")
         status_title.setStyleSheet("font-weight: 600;")
         card_layout.addWidget(status_title)
-        self.status_label = QLabel("点击「开始扫描」。稳定后会自动拍下第一张。")
+        self.status_label = QLabel(_IDLE_STATUS)
         self.status_label.setWordWrap(True)
         card_layout.addWidget(self.status_label)
         self.metrics_label = QLabel("已拍 0 张 · 清晰度 — · 移动 —")
@@ -213,6 +232,14 @@ class ScanWorkbenchDialog(QDialog):
         right.addWidget(self.export_label)
         right.addStretch(1)
         root.addLayout(right, 2)
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        if self._preview_wait_t0 is None:
+            self._preview_wait_t0 = time.monotonic()
+        if not self._timer.isActive():
+            self._timer.start()
+        self._tick()
 
     def current_frame(self) -> np.ndarray | None:
         if self._use_sample and self._sample_frames:
@@ -362,13 +389,58 @@ class ScanWorkbenchDialog(QDialog):
             f"topology_db.json",
         )
 
+    def _source_state(self) -> tuple[str, str]:
+        if self.source_status is None:
+            return "", ""
+        try:
+            mode, notice = self.source_status()
+        except Exception:  # noqa: BLE001 — a broken status callback must not freeze the preview
+            return "", ""
+        return str(mode or ""), str(notice or "")
+
+    def _apply_notice(self, notice: str, *, idle: bool) -> None:
+        if notice:
+            self.live_hint.setText(notice)
+            if idle:
+                self.status_label.setText(notice)
+            return
+        if self.live_hint.text() != _DEFAULT_HINT:
+            self.live_hint.setText(_DEFAULT_HINT)
+        if idle:
+            self.status_label.setText(_LIVE_STATUS)
+
+    def _show_waiting(self, mode: str, notice: str) -> None:
+        """Replace the stuck placeholder once open has produced neither a frame nor an error."""
+        self.live_view.clear()
+        if self._preview_wait_t0 is None:
+            self._preview_wait_t0 = time.monotonic()
+        if notice:
+            self.live_view.setText(notice)
+            self.status_label.setText(
+                "摄像头没有可用画面。可以点「使用样例画面」或「一键演示（样例）」，窗口仍可操作。"
+            )
+            self.live_hint.setText(notice)
+            return
+        waited = time.monotonic() - self._preview_wait_t0
+        if mode in ("", "pending") and waited < _PREVIEW_WAIT_S:
+            self.live_view.setText("正在打开摄像头，请稍候…")
+            self.status_label.setText(_WAIT_STATUS)
+            return
+        if mode in ("", "pending"):
+            self.live_view.setText("仍未收到摄像头画面。若打开失败或超时，将自动改用合成帧。")
+            self.status_label.setText("正在等待画面，窗口仍可操作。")
+            return
+        self.live_view.setText("没有实时画面。可点「使用样例画面」或「一键演示（样例）」。")
+        self.status_label.setText("没有画面")
+
     def _tick(self) -> None:
         frame = self.current_frame()
+        mode, notice = self._source_state()
         if frame is None:
-            self.live_view.setText("没有实时画面。请在主窗口切换到「演示/合成帧」，或点「使用样例画面」。")
-            self.status_label.setText("没有画面")
+            self._show_waiting(mode, notice)
             self._update_buttons()
             return
+        self._preview_wait_t0 = None
         if self._running:
             state = self.session.observe(frame)
             painted = self.session.render(frame)
@@ -390,8 +462,10 @@ class ScanWorkbenchDialog(QDialog):
                     self._first_auto_done = True
                     self.status_label.setText("第一张已拍摄并并入总览。请移动并保留红色覆盖，再拍下一张。")
                     self._refresh_overview(force=True)
+            self._apply_notice(notice, idle=False)
         else:
             self._show_image(self.live_view, frame)
+            self._apply_notice(notice, idle=not self._use_sample and self._exported_dir is None)
         self._refresh_overview()
         self._update_buttons()
 

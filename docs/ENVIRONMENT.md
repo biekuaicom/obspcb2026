@@ -78,7 +78,7 @@ pip install -r requirements-optional.txt
 
 均在仓库根目录、已激活虚拟环境时使用。
 
-启动主窗口（默认摄像头 `0`；没有摄像头会改用合成帧，窗口仍打开）。打开后用工具栏或菜单「扫描建图…」（Ctrl+M）测试扫描生成整板图；没有摄像头时点「演示/合成帧」或「一键演示扫描」：
+启动主窗口（默认摄像头 `0`）。「扫描建图…」（Ctrl+M）打开后直接显示预览。没有摄像头、打开失败或超时会自动改用合成帧并在界面说明，不必先点「演示/合成帧」：
 
 ```bash
 PYTHONPATH=src python -m app.main
@@ -129,5 +129,6 @@ PYTHONPATH=src python -m vision.stable_capture \
 - **`python` 找不到或版本过低**：改用 `python3` 或 `py -3`，先执行 `python3 --version` 确认不低于 3.10。
 - **创建 `venv` 失败**：Debian/Ubuntu 需安装 `python3-venv`（例如 `sudo apt install python3-venv`）。
 - **窗口打不开 / Qt 平台插件报错**：确认有图形界面；无显示器时加 `QT_QPA_PLATFORM=offscreen`。
+- **摄像头没有画面**：工作台打开后应看到实时预览。相机缺失、被占用、权限不够，或打开/读帧超时，会自动改用合成帧并在界面说明；可以继续用「使用样例画面」或「一键演示（样例）」。Windows 上依次尝试 DirectShow 和 Media Foundation，避免某个后端一直卡住。
 - **测试或导入找不到模块**：在仓库根目录执行，并设置 `PYTHONPATH=src`（`pyproject.toml` 已为 pytest 配置了 `pythonpath`）。
 - **不要把 `.venv` 提交进 Git**：已在 `.gitignore` 中忽略。
