@@ -1,0 +1,16 @@
+# 本仓库验证过的核心运行时 + 测试依赖锁定（不含 YOLO / torch）
+# 验证环境：Python 3.13.5（Linux），日期 2026-11-10（Asia/Shanghai）
+# 换系统或换 Python 版本时，若安装失败，请改用 requirements.txt / requirements-dev.txt 的区间约束。
+#
+# 安装：pip install -r requirements-lock.txt
+
+iniconfig==2.3.1
+numpy==2.5.4
+opencv-python==5.0.0.93
+packaging==26.3
+pluggy==1.7.0
+Pygments==2.21.0
+PyQt6==6.12.0
+PyQt6-Qt6==6.12.0
+PyQt6_sip==13.13.0
+pytest==9.2.0

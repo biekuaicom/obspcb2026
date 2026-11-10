@@ -6,6 +6,8 @@
 
 ## 环境
 
+仓库不含虚拟环境（`.venv` 绑定本机系统和 Python 版本，换机器不能直接用）。完整步骤、锁定版本和常见问题见 [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)。
+
 Python 3.10+。核心依赖只有 `opencv-python`、`PyQt6`、`numpy`。
 
 ```bash
@@ -14,7 +16,7 @@ source .venv/bin/activate
 pip install -r requirements-dev.txt
 ```
 
-只跑程序、不跑测试时，把上一行换成 `pip install -r requirements.txt`。也可以 `pip install -e ".[dev]"`。
+只跑程序、不跑测试时，把上一行换成 `pip install -r requirements.txt`。要复现已验证版本可用 `pip install -r requirements-lock.txt`。也可以 `pip install -e ".[dev]"`。
 
 ## 启动
 
