@@ -16,7 +16,7 @@ import argparse
 import json
 import math
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import cv2
@@ -43,6 +43,20 @@ OVERVIEW_MAX_SIDE = 3200
 OVERVIEW_MAX_PIXELS = 8_000_000
 OVERVIEW_MARGIN_PX = 24
 OVERVIEW_FEATHER_PX = 10
+
+# Live red-coverage consensus. Later shots should add constraints, not false blocks.
+_ANCHOR_RECENT = 8
+_ANCHOR_MAX_ALL = 12
+_ANCHOR_EARLIER_STRIDE = 3
+_POSE_CORNER_TOL_PX = 12.0
+_POSE_ANGLE_TOL_DEG = 6.0
+_AMBIGUOUS_SCORE_RATIO = 0.8
+_AMBIGUOUS_INLIER_RATIO = 0.75
+_POINT_MATCH_PX = 6.0
+_MIN_INFRAME_SUPPORT_POINTS = 3
+_MIN_SUPPORT_RATIO = 0.25
+_SLIVER_VISIBLE_FRACTION = 0.15
+_COVERAGE_TOUCH_PX = 2
 
 
 @dataclass
@@ -104,6 +118,15 @@ class _Tile:
     edge_stats: dict | None = None
     edge_before: np.ndarray | None = None
     edge_after: np.ndarray | None = None
+
+
+@dataclass
+class _AnchorHypothesis:
+    tile: _Tile
+    index: int
+    pose: object
+    score: float
+    ref_to_frame: np.ndarray
 
 
 class StableCaptureSession:
@@ -339,26 +362,144 @@ class StableCaptureSession:
     def _track_union(self, frame: np.ndarray) -> None:
         started = time.perf_counter()
         observed = self.extractor.extract(frame)
-        anchor = None
-        pose = None
-        for tile in reversed(self.tiles):
-            if tile.extracted is None:
-                continue
+        hypotheses = self._localize_anchors(observed)
+        width = int(frame.shape[1])
+        height = int(frame.shape[0])
+        primary, ref_to_frame = self._consensus_ref_to_frame(hypotheses, width, height)
+        self._track_ms = (time.perf_counter() - started) * 1000.0
+        if primary is None or ref_to_frame is None:
+            self._pose = None
+            return
+        self.matcher.set_topology(primary.tile.extracted)
+        self._pose = replace(
+            primary.pose,
+            M=np.asarray(_compose_m(ref_to_frame, primary.tile.M_to_ref), dtype=np.float64),
+        )
+        self._anchor_id = primary.tile.tile_id
+        self._quads = self._verified_coverage_quads(
+            ref_to_frame,
+            observed,
+            width,
+            height,
+            primary_index=primary.index,
+        )
+        self._polygon = self._quads[-1] if self._quads else None
+        self._overlap = union_overlap_ratio(self._quads, width, height)
+        self._tracked = True
+
+    def _localize_anchors(self, observed) -> list[_AnchorHypothesis]:
+        """Score every usable tile localization; do not stop at the first ok pose."""
+        hypotheses = []
+        for tile in self._candidate_anchor_tiles():
             self.matcher.set_topology(tile.extracted)
             candidate = self.matcher.localize(observed)
-            if candidate.ok and not alignment_rejected(candidate.M):
-                anchor = tile
-                pose = candidate
-                break
-        self._track_ms = (time.perf_counter() - started) * 1000.0
-        self._pose = pose
-        if anchor is None or pose is None:
-            return
-        self._anchor_id = anchor.tile_id
-        self._quads = self._quads_from_anchor(anchor, pose.M)
-        self._polygon = self._quads[-1] if self._quads else None
-        self._overlap = union_overlap_ratio(self._quads, frame.shape[1], frame.shape[0])
-        self._tracked = True
+            if not candidate.ok or alignment_rejected(candidate.M):
+                continue
+            index = self.tiles.index(tile)
+            hypotheses.append(
+                _AnchorHypothesis(
+                    tile=tile,
+                    index=index,
+                    pose=candidate,
+                    score=_localization_score(candidate),
+                    ref_to_frame=_compose_m(
+                        np.asarray(candidate.M, dtype=np.float64),
+                        _invert_m(tile.M_to_ref),
+                    ),
+                )
+            )
+        hypotheses.sort(key=lambda item: (item.score, item.pose.confidence, item.pose.inliers), reverse=True)
+        return hypotheses
+
+    def _candidate_anchor_tiles(self) -> list[_Tile]:
+        tiles = [tile for tile in self.tiles if tile.extracted is not None]
+        if not tiles:
+            return []
+        if len(tiles) <= _ANCHOR_MAX_ALL:
+            return list(reversed(tiles))
+        chosen: list[_Tile] = []
+        seen: set[int] = set()
+
+        def add(tile: _Tile) -> None:
+            marker = id(tile)
+            if marker not in seen:
+                seen.add(marker)
+                chosen.append(tile)
+
+        for tile in reversed(tiles[-_ANCHOR_RECENT:]):
+            add(tile)
+        earlier = tiles[:-_ANCHOR_RECENT]
+        if earlier:
+            add(earlier[0])
+            for tile in earlier[_ANCHOR_EARLIER_STRIDE::_ANCHOR_EARLIER_STRIDE]:
+                add(tile)
+        return chosen
+
+    def _consensus_ref_to_frame(
+        self,
+        hypotheses: list[_AnchorHypothesis],
+        width: int,
+        height: int,
+    ) -> tuple[_AnchorHypothesis | None, np.ndarray | None]:
+        if not hypotheses:
+            return None, None
+        primary = hypotheses[0]
+        sample = _apply_m(primary.tile.M_to_ref, tile_corners(primary.tile.width, primary.tile.height))
+        # If the primary tile is tiny, also compare a live-frame-sized box in ref space.
+        if float(np.linalg.norm(sample[2] - sample[0])) < 80.0 and width > 1 and height > 1:
+            frame_corners = tile_corners(width, height)
+            try:
+                sample = np.vstack([sample, _apply_m(_invert_m(primary.ref_to_frame), frame_corners)])
+            except np.linalg.LinAlgError:
+                pass
+        supporters = [primary]
+        for other in hypotheses[1:]:
+            if _poses_consistent(primary.ref_to_frame, other.ref_to_frame, sample):
+                supporters.append(other)
+                continue
+            if _is_strong_rival(other, primary):
+                return None, None
+        ref_to_frame = _blend_ref_to_frame([(item.ref_to_frame, item.score) for item in supporters])
+        return primary, ref_to_frame
+
+    def _verified_coverage_quads(
+        self,
+        ref_to_frame: np.ndarray,
+        observed,
+        width: int,
+        height: int,
+        *,
+        primary_index: int,
+    ) -> list[np.ndarray]:
+        """Paint only tiles that have point support and stay connected to the anchor overlap."""
+        observed_xy = observed.xy() if observed is not None else np.zeros((0, 2), dtype=np.float64)
+        quads: list[np.ndarray | None] = []
+        trusted: list[bool] = []
+        for index, tile in enumerate(self.tiles):
+            tile_to_frame = _compose_m(ref_to_frame, tile.M_to_ref)
+            quad = project_tile_quad(tile_to_frame, tile.width, tile.height)
+            quads.append(quad)
+            if index == primary_index:
+                trusted.append(True)
+                continue
+            trusted.append(_tile_is_trusted_in_view(tile, tile_to_frame, quad, observed_xy, width, height))
+        accepted = [False] * len(self.tiles)
+        if 0 <= primary_index < len(self.tiles):
+            accepted[primary_index] = True
+        mask = np.zeros((height, width), dtype=np.uint8)
+        if accepted[primary_index]:
+            _fill_quad(mask, quads[primary_index])
+        changed = True
+        while changed:
+            changed = False
+            for index, quad in enumerate(quads):
+                if accepted[index] or not trusted[index] or quad is None:
+                    continue
+                if _quad_touches_mask(quad, mask, touch_px=_COVERAGE_TOUCH_PX):
+                    accepted[index] = True
+                    _fill_quad(mask, quad)
+                    changed = True
+        return [quads[index] for index, keep in enumerate(accepted) if keep]
 
     def _quads_from_anchor(self, anchor: _Tile, anchor_to_frame: np.ndarray) -> list[np.ndarray]:
         """Map every captured tile into the live frame through the chain frame."""
@@ -1041,6 +1182,122 @@ def paint_red_coverage(frame_bgr: np.ndarray, quad: np.ndarray, alpha: float = 0
 
 def _red_pixels(image: np.ndarray) -> int:
     return int(np.count_nonzero(image[:, :, 2] > image[:, :, 0] + 20))
+
+
+def _localization_score(pose) -> float:
+    return float(pose.inliers) + 4.0 * float(pose.confidence)
+
+
+def _is_strong_rival(other: _AnchorHypothesis, primary: _AnchorHypothesis) -> bool:
+    """A second high-scoring pose that disagrees with the primary is ambiguous."""
+    if other.score < _AMBIGUOUS_SCORE_RATIO * primary.score:
+        return False
+    min_inliers = max(8, int(np.ceil(_AMBIGUOUS_INLIER_RATIO * float(primary.pose.inliers))))
+    return int(other.pose.inliers) >= min_inliers
+
+
+def _poses_consistent(ref_a: np.ndarray, ref_b: np.ndarray, sample_xy: np.ndarray) -> bool:
+    if sample_xy is None or len(sample_xy) == 0:
+        return _pose_angle_delta_deg(ref_a, ref_b) <= _POSE_ANGLE_TOL_DEG
+    return (
+        _pose_corner_error_px(ref_a, ref_b, sample_xy) <= _POSE_CORNER_TOL_PX
+        and _pose_angle_delta_deg(ref_a, ref_b) <= _POSE_ANGLE_TOL_DEG
+    )
+
+
+def _pose_corner_error_px(ref_a: np.ndarray, ref_b: np.ndarray, sample_xy: np.ndarray) -> float:
+    left = _apply_m(ref_a, sample_xy)
+    right = _apply_m(ref_b, sample_xy)
+    return float(np.max(np.linalg.norm(left - right, axis=1)))
+
+
+def _pose_angle_delta_deg(ref_a: np.ndarray, ref_b: np.ndarray) -> float:
+    delta = pose_angle_deg(ref_a) - pose_angle_deg(ref_b)
+    return abs((delta + 180.0) % 360.0 - 180.0)
+
+
+def _blend_ref_to_frame(items: list[tuple[np.ndarray, float]]) -> np.ndarray:
+    total = float(sum(max(weight, 1e-6) for _matrix, weight in items)) or 1.0
+    blended = np.zeros((2, 3), dtype=np.float64)
+    for matrix, weight in items:
+        blended += (max(weight, 1e-6) / total) * np.asarray(matrix, dtype=np.float64)
+    return blended
+
+
+def _tile_xy(tile: _Tile) -> np.ndarray:
+    if tile.extracted is not None:
+        return tile.extracted.xy()
+    if tile.points:
+        return np.array([point["xy"] for point in tile.points], dtype=np.float64)
+    return np.zeros((0, 2), dtype=np.float64)
+
+
+def _in_frame_mask(xy: np.ndarray, width: int, height: int) -> np.ndarray:
+    return (xy[:, 0] >= 0.0) & (xy[:, 0] < float(width)) & (xy[:, 1] >= 0.0) & (xy[:, 1] < float(height))
+
+
+def _quad_visible_fraction(quad: np.ndarray, width: int, height: int, tile_width: int, tile_height: int) -> float:
+    tile_area = float(max(1, int(tile_width) * int(tile_height)))
+    frame = np.array(
+        [[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]],
+        dtype=np.float32,
+    )
+    polygon = np.asarray(quad, dtype=np.float32).reshape(-1, 2)
+    if polygon.shape[0] < 3 or not np.isfinite(polygon).all():
+        return 0.0
+    area, _intersection = cv2.intersectConvexConvex(polygon, frame)
+    return float(max(0.0, area) / tile_area)
+
+
+def _tile_is_trusted_in_view(
+    tile: _Tile,
+    tile_to_frame: np.ndarray,
+    quad: np.ndarray,
+    observed_xy: np.ndarray,
+    width: int,
+    height: int,
+) -> bool:
+    if quad is None or not np.isfinite(quad).all():
+        return False
+    visible = _quad_visible_fraction(quad, width, height, tile.width, tile.height)
+    if visible <= _SLIVER_VISIBLE_FRACTION:
+        return True
+    library = _tile_xy(tile)
+    if len(library) == 0:
+        return False
+    projected = _apply_m(tile_to_frame, library)
+    inside = _in_frame_mask(projected, width, height)
+    n_in = int(np.count_nonzero(inside))
+    if n_in == 0:
+        return False
+    if len(observed_xy) == 0:
+        return False
+    in_pts = projected[inside]
+    distances = np.linalg.norm(in_pts[:, None, :] - observed_xy[None, :, :], axis=2)
+    hits = int(np.count_nonzero(distances.min(axis=1) <= _POINT_MATCH_PX))
+    if n_in < _MIN_INFRAME_SUPPORT_POINTS:
+        return hits >= n_in
+    needed = max(_MIN_INFRAME_SUPPORT_POINTS, int(np.ceil(_MIN_SUPPORT_RATIO * n_in)))
+    return hits >= needed
+
+
+def _fill_quad(mask: np.ndarray, quad: np.ndarray) -> None:
+    polygon = np.round(np.asarray(quad, dtype=np.float64)).astype(np.int32).reshape(-1, 1, 2)
+    if polygon.shape[0] >= 3 and np.isfinite(quad).all():
+        cv2.fillConvexPoly(mask, polygon, 255)
+
+
+def _quad_touches_mask(quad: np.ndarray, accepted_mask: np.ndarray, *, touch_px: int) -> bool:
+    if accepted_mask is None or not np.any(accepted_mask):
+        return False
+    if quad is None or not np.isfinite(quad).all():
+        return False
+    radius = max(1, int(touch_px))
+    kernel = np.ones((2 * radius + 1, 2 * radius + 1), dtype=np.uint8)
+    dilated = cv2.dilate(accepted_mask, kernel, iterations=1)
+    probe = np.zeros_like(accepted_mask)
+    _fill_quad(probe, quad)
+    return bool(np.any((probe > 0) & (dilated > 0)))
 
 
 def _identity_m() -> np.ndarray:

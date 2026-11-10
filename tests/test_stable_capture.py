@@ -5,6 +5,8 @@ import numpy as np
 
 from vision.stable_capture import (
     StableCaptureSession,
+    _Tile,
+    _translate_m,
     alignment_rejected,
     binary_lines,
     compensate_board_edge,
@@ -193,6 +195,88 @@ def test_small_rotation_is_recovered_and_a_mirror_is_rejected():
     estimated = session.edges[0]["angle_deg"]
     error = (estimated - truth + 180.0) % 360.0 - 180.0
     assert abs(error) < 3.0
+
+
+def _red_mask(image):
+    return image[:, :, 2] > image[:, :, 0] + 20
+
+
+def test_disconnected_false_tile_is_not_painted_red():
+    """A wrong chain pose must not drop an isolated red block on unphotographed pixels."""
+    board = _board(height=240, width=520)
+    window = board[24:150, 20:180]
+    shifted = board[24:150, 44:204]
+    mid = board[24:150, 60:220]
+    # Pad empty board to the right so the live frame has a large unphotographed region
+    # while the left still overlaps the captured tiles enough to track.
+    live = np.full((mid.shape[0], mid.shape[1] + 160, 3), 176, np.uint8)
+    live[:, : mid.shape[1]] = mid
+    session = StableCaptureSession(min_overlap=0.08)
+    session.start()
+    _settle(session, window)
+    assert session.capture().ok is True
+    _settle(session, shifted)
+    assert session.capture().ok is True
+
+    session.tiles.append(
+        _Tile(
+            tile_id="cap-false",
+            width=90,
+            height=100,
+            raw=np.zeros((100, 90, 3), np.uint8),
+            binary=np.zeros((100, 90), np.uint8),
+            points=[],
+            extracted=None,
+            M_to_ref=_translate_m(230, 12),
+        )
+    )
+
+    state = _settle(session, live)
+    assert state.tracked is True
+    overlay = session.render(live)
+    red = _red_mask(overlay)
+    assert int(red[:, 20:120].sum()) > 200
+    # Injected tile projects to roughly x=190..280, past the true overlap ending near x=144.
+    isolated = red[20:90, 200:280]
+    assert int(isolated.sum()) == 0
+    assert all(float(np.max(quad[:, 0])) < 160 for quad in session.coverage_quads)
+
+
+def test_conflicting_anchor_poses_do_not_paint_or_track():
+    """Two strong localizations that imply different chain poses must not accept a false union."""
+    board = _board(height=240, width=460)
+    window = board[24:150, 20:160]
+    shifted = board[24:150, 44:184]
+    session = StableCaptureSession(min_overlap=0.08)
+    session.start()
+    _settle(session, window)
+    assert session.capture().ok is True
+    _settle(session, shifted)
+    assert session.capture().ok is True
+
+    original = session.tiles[0]
+    session.tiles.append(
+        _Tile(
+            tile_id="cap-conflict",
+            width=original.width,
+            height=original.height,
+            raw=original.raw.copy(),
+            binary=original.binary.copy(),
+            points=list(original.points),
+            extracted=original.extracted,
+            M_to_ref=_translate_m(180, 40),
+        )
+    )
+
+    state = _settle(session, window)
+    assert state.tracked is False
+    assert session.coverage_quads == []
+    overlay = session.render(window)
+    assert int(_red_mask(overlay).sum()) == 0
+    rejected = session.capture()
+    assert rejected.ok is False
+    assert "退回" in rejected.reason
+    assert len(session.tiles) == 3
 
 
 def test_wavy_board_edge_is_pulled_toward_a_line():
