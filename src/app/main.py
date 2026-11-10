@@ -3,7 +3,8 @@
     PYTHONPATH=src python -m app.main
 
 ``--smoke`` opens the window off the caller's Qt platform, waits for one
-frame, and exits. It does not package or install anything.
+frame, and exits. ``--demo-scan`` runs the sample board scan headless,
+writes ``overview.png``, prints the path, and exits 0.
 """
 
 from __future__ import annotations
@@ -31,7 +32,7 @@ from app.ui.main_window import MainWindow  # noqa: E402
 
 
 def _parse_args(argv: list[str] | None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="PCB AR 标注壳（本轮无打包、无跟踪算法）")
+    parser = argparse.ArgumentParser(description="PCB AR 标注：稳定扫描建图与主窗口")
     parser.add_argument(
         "--source",
         default=None,
@@ -43,6 +44,17 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         "--smoke",
         action="store_true",
         help="收到第一帧后退出。无显示器时配合 QT_QPA_PLATFORM=offscreen",
+    )
+    parser.add_argument(
+        "--demo-scan",
+        action="store_true",
+        help="用 SAMPLE-PARTIAL-001 跑完扫描，写出 overview.png 后退出（无需显示器或摄像头）",
+    )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="--demo-scan 的输出目录；默认 artifacts/scan_maps/<board>-<时间戳>",
     )
     return parser.parse_args(argv)
 
@@ -57,9 +69,31 @@ def _parse_source(text: str | None, *, smoke: bool) -> int | str:
     return text
 
 
+def _run_demo_scan(out: Path | None) -> int:
+    from vision.stable_capture import run_demo_scan
+
+    try:
+        summary = run_demo_scan(out)
+    except FileNotFoundError as exc:
+        print(f"demo-scan failed: {exc}", file=sys.stderr, flush=True)
+        return 1
+    overview = summary.get("overview")
+    size = summary.get("overview_size") or [0, 0]
+    if not overview or not Path(overview).is_file():
+        print("demo-scan failed: overview.png was not written", file=sys.stderr, flush=True)
+        return 1
+    print(
+        f"demo-scan ok: {overview} {size[0]}x{size[1]} shots={summary.get('shots')}",
+        flush=True,
+    )
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    if args.demo_scan:
+        return _run_demo_scan(args.out)
     source = _parse_source(args.source, smoke=args.smoke)
 
     app = QApplication([sys.argv[0]])

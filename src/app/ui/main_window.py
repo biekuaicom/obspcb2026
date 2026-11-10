@@ -5,10 +5,12 @@ from __future__ import annotations
 import time
 
 from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QAction, QKeySequence
 from PyQt6.QtWidgets import QDockWidget, QMainWindow
 
 from app.paths import repo_root, sample_project_path
 from app.ui.canvas import PCBCanvasView
+from app.ui.scan_dialog import ScanWorkbenchDialog
 from app.ui.sidebar import SidebarPanel
 from model.schema import SchemaError
 from model.store import ProjectStore
@@ -79,6 +81,8 @@ class MainWindow(QMainWindow):
         self._fps_count = 0
         self._fps_t0 = time.monotonic()
         self._load_error = ""
+        self._last_frame = None
+        self._scan_dialog: ScanWorkbenchDialog | None = None
 
         self.setCentralWidget(self.canvas)
         self.dock = QDockWidget("元件参数", self)
@@ -95,9 +99,31 @@ class MainWindow(QMainWindow):
         quit_action = file_menu.addAction("退出")
         quit_action.triggered.connect(self.close)
 
+        scan_menu = self.menuBar().addMenu("扫描")
+        self.scan_action = QAction("扫描建图…", self)
+        self.scan_action.setShortcut(QKeySequence("Ctrl+M"))
+        self.scan_action.triggered.connect(self.open_scan_workbench)
+        scan_menu.addAction(self.scan_action)
+        self.demo_scan_action = QAction("一键演示扫描", self)
+        self.demo_scan_action.triggered.connect(self.run_demo_scan)
+        scan_menu.addAction(self.demo_scan_action)
+        scan_menu.addSeparator()
+        self.synthetic_action = QAction("演示/合成帧", self)
+        self.synthetic_action.triggered.connect(self.use_synthetic_source)
+        scan_menu.addAction(self.synthetic_action)
+
+        toolbar = self.addToolBar("扫描")
+        toolbar.setObjectName("scanToolbar")
+        toolbar.setMovable(False)
+        toolbar.addAction(self.scan_action)
+        toolbar.addAction(self.demo_scan_action)
+        toolbar.addAction(self.synthetic_action)
+
         self._load_sample()
         self.canvas.set_tracking_ok(False)
-        self.statusBar().showMessage("正在打开视频…")
+        self.statusBar().showMessage(
+            "正在打开视频…  无摄像头时请点工具栏「演示/合成帧」或「一键演示扫描」。扫描建图：Ctrl+M"
+        )
         self.statusBar().setToolTip(
             "主路径 LocalGlobal，仿射降级。"
             f"跟踪丢失 TTL {TRACKING_LOST_TTL_S:g}s（计时未接入）。"
@@ -149,8 +175,30 @@ class MainWindow(QMainWindow):
             notice = f"{notice} {mm_warning}"
         self.sidebar.set_notice(notice)
 
+    def current_frame(self):
+        return self._last_frame
+
+    def open_scan_workbench(self) -> ScanWorkbenchDialog:
+        if self._scan_dialog is not None:
+            self._scan_dialog.close()
+        board_id = self.store.project.board_id if self.store.project is not None else "SCAN-BOARD"
+        dialog = ScanWorkbenchDialog(self.current_frame, parent=self, board_id=board_id)
+        self._scan_dialog = dialog
+        dialog.show()
+        return dialog
+
+    def run_demo_scan(self) -> None:
+        dialog = self.open_scan_workbench()
+        dialog.run_sample_demo()
+
+    def use_synthetic_source(self) -> None:
+        self.capture.set_source("synthetic")
+        self.statusBar().showMessage("已切换到演示/合成帧。打开「扫描建图…」即可在没有摄像头时预览流程。")
+        self.sidebar.set_notice("当前视频源：演示/合成帧。要用样例板生成整张图，请点「一键演示扫描」或在扫描工作台里「使用样例画面」。")
+
     def _on_frame(self, frame, timestamp: float) -> None:
         del timestamp
+        self._last_frame = frame
         self.canvas.set_video_frame(frame)
         self._note_fps()
         self._refresh_status()
@@ -189,7 +237,7 @@ class MainWindow(QMainWindow):
         else:
             board = "无工程"
         self.statusBar().showMessage(
-            f"视频：{mode} {size} · {fps} · {board} · 标注层空 · 跟踪：桩，未配准"
+            f"视频：{mode} {size} · {fps} · {board} · 扫描建图 Ctrl+M · 标注层空 · 跟踪：桩，未配准"
         )
 
     def _smoke_timeout(self) -> None:

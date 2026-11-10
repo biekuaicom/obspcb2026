@@ -78,7 +78,7 @@ pip install -r requirements-optional.txt
 
 均在仓库根目录、已激活虚拟环境时使用。
 
-启动主窗口（默认摄像头 `0`；没有摄像头会改用合成帧，窗口仍打开）：
+启动主窗口（默认摄像头 `0`；没有摄像头会改用合成帧，窗口仍打开）。打开后用工具栏或菜单「扫描建图…」（Ctrl+M）测试扫描生成整板图；没有摄像头时点「演示/合成帧」或「一键演示扫描」：
 
 ```bash
 PYTHONPATH=src python -m app.main
@@ -96,13 +96,25 @@ PYTHONPATH=src python -m app.main --source synthetic
 QT_QPA_PLATFORM=offscreen PYTHONPATH=src python -m app.main --smoke
 ```
 
+无显示器跑通扫描并写出整板总览 `overview.png`（用样例 `SAMPLE-PARTIAL-001`，不需要摄像头）：
+
+```bash
+PYTHONPATH=src python -m app.main --demo-scan
+```
+
+也可以指定输出目录：
+
+```bash
+PYTHONPATH=src python -m app.main --demo-scan --out artifacts/scan_maps/demo
+```
+
 跑测试：
 
 ```bash
 PYTHONPATH=src python -m pytest
 ```
 
-稳定间隔拍照建图示例（需已有样例 `SAMPLE-PARTIAL-001`）：
+稳定间隔拍照建图示例（需已有样例 `SAMPLE-PARTIAL-001`，会写出 `overview.png`）：
 
 ```bash
 PYTHONPATH=src python -m vision.stable_capture \

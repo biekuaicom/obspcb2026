@@ -1,14 +1,12 @@
 # PCB AR 标注
 
-显微镜正上方摄像头的 PCB 元件 AR 标注。当前仓库是**可运行壳 + 接口桩**，用来对齐 `docs/TECH_SPEC.md` 和 `docs/DATA_MODEL.md`。
+显微镜正上方摄像头的 PCB 扫描与元件 AR 标注。当前**主要可测能力**是：在清晰稳定的画面间隔拍照，把已拍区域用红色半透明覆盖贴在板面上，并在每拍一张后立刻把彩色关键帧拼进一张可打开查看的**整板总览图**。
 
-**本轮不做打包（no packaging in this slice）。** 没有 PyInstaller，没有安装包，也没有 `ultralytics` / torch。
+下载安装后不必接摄像头也能测：用样例板 `SAMPLE-PARTIAL-001` 一键跑完整流程，或在界面里用「演示/合成帧」「使用样例画面」。
 
-## 环境
+环境配置、锁定版本和常见问题见 [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)。仓库不含虚拟环境（`.venv` 绑定本机系统和 Python 版本，换机器不能直接用）。
 
-仓库不含虚拟环境（`.venv` 绑定本机系统和 Python 版本，换机器不能直接用）。完整步骤、锁定版本和常见问题见 [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md)。
-
-Python 3.10+。核心依赖只有 `opencv-python`、`PyQt6`、`numpy`。
+Python 3.10+。核心依赖只有 `opencv-python`、`PyQt6`、`numpy`。本仓库不做打包，也没有 `ultralytics` / torch。
 
 ```bash
 python -m venv .venv
@@ -18,7 +16,7 @@ pip install -r requirements-dev.txt
 
 只跑程序、不跑测试时，把上一行换成 `pip install -r requirements.txt`。要复现已验证版本可用 `pip install -r requirements-lock.txt`。也可以 `pip install -e ".[dev]"`。
 
-## 启动
+## 启动界面
 
 在仓库根目录：
 
@@ -32,15 +30,72 @@ PYTHONPATH=src python -m app.main
 cd src && python -m app.main
 ```
 
-默认视频源是摄像头 `0`。没有摄像头时会发一条错误并改画合成 PCB 帧，窗口仍然开着。强制合成帧：
+默认视频源是摄像头 `0`。没有摄像头时会改用合成 PCB 帧，窗口仍然打开。建议一打开就看工具栏上的三个入口：
+
+- **扫描建图…**（`Ctrl+M`）：左侧实时画面 + 红色覆盖，右侧增量整板总览。按钮包括「开始扫描」「拍摄当前区域」「完成并导出整板图」「一键演示（样例）」。稳定后会自动拍第一张；重叠不足会拒绝并提示退回。
+- **一键演示扫描**：用样例 `SAMPLE-PARTIAL-001` 自动跑完扫描，导出整板总览。
+- **演示/合成帧**：没有摄像头时切到合成画面，便于打开工作台看清操作。
+
+强制合成帧：
 
 ```bash
 PYTHONPATH=src python -m app.main --source synthetic
 ```
 
-窗口标题是「PCB AR 标注」。画面是底层视频 pixmap，上面是空的标注层，右边是「元件参数」占位栏。侧栏只标未核对红 `#E53935` 和已核对绿 `#43A047`。
+完成扫描后，`overview.png`、`chain.json`、`topology_db.json` 写到 `artifacts/scan_maps/<板号-时间戳>/`，对话框会给出路径。总览是受约束的低分辨率预览（默认最长边 3200 px、最多约 800 万像素），不是全分辨率像素画布。
 
-## 已确认（v0.1.1）
+窗口标题是「PCB AR 标注」。主画面仍是底层视频加空标注层，右边是「元件参数」栏。跟踪与气泡标注还是桩，本轮重点是扫描生成整板图。
+
+## 一键演示（无需界面）
+
+没有显示器或只想先看结果时：
+
+```bash
+PYTHONPATH=src python -m app.main --demo-scan
+```
+
+指定输出目录：
+
+```bash
+PYTHONPATH=src python -m app.main --demo-scan --out artifacts/scan_maps/demo
+```
+
+成功时标准输出类似：
+
+```
+demo-scan ok: artifacts/scan_maps/demo/overview.png 652x408 shots=3
+```
+
+这会用 `assets/samples/SAMPLE-PARTIAL-001/global_ref.png` 裁出重叠视图，走与界面相同的稳定拍摄、红区跟踪和增量总览，不需要摄像头或 Qt 窗口。示例总览（672×442）：
+
+![扫描整板总览示例](docs/images/scan_overview_example.png)
+
+也可以直接调用底层命令（同样写出 `overview.png`）：
+
+```bash
+PYTHONPATH=src python -m vision.stable_capture \
+  --global assets/samples/SAMPLE-PARTIAL-001/global_ref.png \
+  --out artifacts/stable_capture_map
+```
+
+无显示器检查主窗口仍能出帧：
+
+```bash
+QT_QPA_PLATFORM=offscreen PYTHONPATH=src python -m app.main --smoke
+```
+
+`--smoke` 收到第一帧后退出。成功时标准输出有一行 `smoke ok:`。
+
+## 扫描规则（可测行为）
+
+- 先点「开始扫描」，画面清晰且两帧之间几乎不动，才允许拍摄。
+- 第一张在稳定后自动拍下；已拍区域用红色半透明覆盖跟着板面走。
+- 下一张必须与已拍红区有足够重叠，否则拒绝并提示「请退回重拍」。
+- 每张成功的彩色关键帧立刻 warp 进右侧总览，重叠处做羽化混合；可选地在重叠区做一次轻量 ECC，失败就跳过。画布过大时会缩小重建，不会悄悄丢掉新瓦片。
+- `render()` 仍然只在**当前帧**上画红区并集，不是整板图。整板图是 `overview_image()` / `overview.png`。
+- 拓扑里的 `full_canvas` 仍为 `false`：这是预览，不是全分辨率画布。没有回环闭合，长距离扫描会有累积漂移。
+
+## 已确认（v0.1.x 壳约定）
 
 写进桩和文档，跟踪界面还没做：
 
@@ -52,14 +107,6 @@ PYTHONPATH=src python -m app.main --source synthetic
 - D9 / D12：顶层 `status` 才是核对状态；气泡键就是 `name`、`value`、`package`。
 
 D6–D8、D10–D11、D13–D14 已在 v0.1.2 确认：默认相机 0 / 近 4K / 无相机走合成帧，样例 zip 进 `assets/samples/`，路径相对 `assets/projects/`，运行时不用 pydantic。清单见 `docs/MILESTONES.md`。
-
-需要图形界面（`DISPLAY` 或 Wayland）。没有显示器时：
-
-```bash
-QT_QPA_PLATFORM=offscreen PYTHONPATH=src python -m app.main --smoke
-```
-
-`--smoke` 收到第一帧后退出。成功时标准输出有一行 `smoke ok:`。
 
 ## 拼接对照
 
@@ -81,7 +128,7 @@ PYTHONPATH=src python -m vision.stitch_compare \
   --out artifacts/stitch_compare
 ```
 
-OpenCV Stitcher 只在加 `--try-stitcher` 时试一次，失败会写进说明，不作为唯一结果。对照分数不够时 `ok` 为 false。
+OpenCV Stitcher 只在加 `--try-stitcher` 时试一次，失败会写进说明，不作为唯一结果。对照分数不够时 `ok` 为 false。视频拼接模块（`vision.mosaic`）仍是非默认备用路径。
 
 ## 测试
 
@@ -89,31 +136,35 @@ OpenCV Stitcher 只在加 `--try-stitcher` 时试一次，失败会写进说明�
 PYTHONPATH=src python -m pytest
 ```
 
-计划与用例编号在 `docs/TEST_PLAN.md`。
+计划与用例编号在 `docs/TEST_PLAN.md`。扫描总览与 `--demo-scan` 对应的测试在 `tests/test_overview_scan.py`。
 
-## 本轮有什么
+## 现在有什么
 
+- 稳定间隔扫描：`StableCaptureSession`（清晰/静止门控、红区跟踪、重叠拒绝、彩色增量总览、导出 `overview.png`）。
+- 扫描工作台：`src/app/ui/scan_dialog.py`，从主窗口菜单/工具栏进入。
+- `--demo-scan` 与「一键演示（样例）」，用 `SAMPLE-PARTIAL-001` 即可测整板图。
 - `VideoCaptureThread`：`QThread`，信号 `frame_ready(object, float)`、`error(str)`、`stopped()`，`stop(wait_ms)` 可重复调用。`source` 可以是摄像头索引、视频路径，或 `"synthetic"`。
-- `PCBAffineTracker` / `AffineResult`、`LocalGlobalTracker` / `HomographyResult`。`M` 是 2×3，`H` 是 3×3，方向都是**全局像素 → 当前帧像素**。LocalGlobal 是主路径，仿射是降级。`track()` 返回 `ok=False` 和单位矩阵。`project_boxes` 只做给定 `H` 的投影。
-- `BoardProject` / `Component` / `Fiducial` / `ProjectStore`。权威状态在元件的顶层 `status`。气泡键固定为 `name` / `value` / `package`。样例工程：`assets/projects/DEMO-PCB-001.json`。
-- 主窗口壳。不在画布上画框，也不编辑参数。
+- `PCBAffineTracker` / `AffineResult`、`LocalGlobalTracker` / `HomographyResult`。`M` 是 2×3，`H` 是 3×3，方向都是**全局像素 → 当前帧像素**。LocalGlobal 是主路径，仿射是降级。主窗口里 `track()` 仍未接入逐帧配准。
+- `BoardProject` / `Component` / `Fiducial` / `ProjectStore`。权威状态在元件的顶层 `status`。样例工程：`assets/projects/DEMO-PCB-001.json`。
 
-## 本轮没有什么
+## 现在还没有什么
 
-- 真实跟踪、拼接、检测权重
-- 右侧栏表单和气泡编辑
+- 主窗口上的实时 AR 标注、右侧栏表单和气泡编辑
+- 回环闭合 / 位姿图优化（长距离扫描会有累积漂移）
+- 全分辨率像素画布
 - XYZ 机台标定（`src/calib/xyz.py` 调用会抛 `NotImplementedError`）
-- 打包与可选检测依赖
-- 样例全局图 PNG（JSON 里的 `global_map_path` 指向尚未提供的文件）
+- 打包与可选检测依赖（YOLO / torch）
 
 ## 目录
 
 ```
-src/app/main.py                 启动
+src/app/main.py                 启动（含 --smoke、--demo-scan）
 src/app/ui/main_window.py       主窗口
+src/app/ui/scan_dialog.py       扫描建图工作台
 src/app/ui/canvas.py            视频层 + 空标注层
 src/app/ui/annotation_items.py  框 / 线 / 气泡类（未放上场景）
 src/app/ui/sidebar.py           右侧占位
+src/vision/stable_capture.py    稳定拍照、红区跟踪、彩色总览
 src/vision/capture.py           采集线程
 src/vision/policy.py            D1/D3/D4 常量（TTL 0.8s）
 src/vision/affine_tracker.py    仿射降级桩
@@ -121,7 +172,8 @@ src/vision/local_global.py      主路径单应桩与 project_boxes
 src/model/schema.py             JSON 结构与 STATUS_COLORS
 src/model/store.py              读写与可见性过滤
 src/calib/xyz.py                标定占位
-assets/projects/DEMO-PCB-001.json
+assets/samples/SAMPLE-PARTIAL-001/
+docs/ENVIRONMENT.md
 docs/TECH_SPEC.md
 docs/DATA_MODEL.md
 docs/MILESTONES.md

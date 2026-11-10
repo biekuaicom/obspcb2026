@@ -1,8 +1,11 @@
 """Stable interval capture with red coverage tracking.
 
 Default mapping path: shoot only when the view is sharp and still, then keep
-the captured footprint stuck to the board. The red mask is the last tile
-projected into the current frame. There is no growing full-board pixel canvas.
+the captured footprint stuck to the board. ``render()`` paints the red coverage
+union on the current live frame only. A constrained low-resolution color
+overview is fused after each accepted shot so a board-wide preview can be
+exported; that overview is not a full-resolution pixel canvas
+(``full_canvas`` stays false).
 
 Video mosaic remains an optional bypass in ``vision.mosaic``.
 """
@@ -11,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -32,6 +36,13 @@ _NOT_STARTED = "请先点击开始"
 _NO_OVERLAP = "红区重叠不足，请退回重拍"
 _LOST = "未能跟上已拍区域，请退回红色覆盖处重拍"
 _ACCEPTED = "已拍摄"
+_READY = "稳定，可以拍摄"
+_READY_OVERLAP = "重叠足够，可以拍摄"
+
+OVERVIEW_MAX_SIDE = 3200
+OVERVIEW_MAX_PIXELS = 8_000_000
+OVERVIEW_MARGIN_PX = 24
+OVERVIEW_FEATHER_PX = 10
 
 
 @dataclass
@@ -88,6 +99,11 @@ class _Tile:
     points: list[dict] = field(default_factory=list)
     extracted: object | None = None
     M_to_ref: np.ndarray = field(default_factory=lambda: np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]))
+    corrected: np.ndarray | None = None
+    M_overview: np.ndarray | None = None
+    edge_stats: dict | None = None
+    edge_before: np.ndarray | None = None
+    edge_after: np.ndarray | None = None
 
 
 class StableCaptureSession:
@@ -100,12 +116,24 @@ class StableCaptureSession:
         max_motion_px: float = 8.0,
         min_overlap: float = 0.08,
         max_long_edge: int = 640,
+        overview_max_side: int = OVERVIEW_MAX_SIDE,
+        overview_max_pixels: int = OVERVIEW_MAX_PIXELS,
+        overview_margin_px: int = OVERVIEW_MARGIN_PX,
+        overview_feather_px: int = OVERVIEW_FEATHER_PX,
+        overview_refine: bool = True,
     ):
         if min_sharpness <= 0 or max_motion_px <= 0 or not 0.0 < min_overlap < 1.0:
             raise ValueError("thresholds must be positive and overlap in (0, 1)")
+        if overview_max_side <= 0 or overview_max_pixels <= 0 or overview_margin_px < 0 or overview_feather_px <= 0:
+            raise ValueError("overview limits must be positive")
         self.min_sharpness = float(min_sharpness)
         self.max_motion_px = float(max_motion_px)
         self.min_overlap = float(min_overlap)
+        self.overview_max_side = int(overview_max_side)
+        self.overview_max_pixels = int(overview_max_pixels)
+        self.overview_margin_px = int(overview_margin_px)
+        self.overview_feather_px = int(overview_feather_px)
+        self.overview_refine = bool(overview_refine)
         self.extractor = TopologyExtractor(max_long_edge=max_long_edge)
         self.matcher = ConstellationMatcher()
         self.localizer = GeometricLocalizer(self.extractor, self.matcher)
@@ -125,9 +153,40 @@ class StableCaptureSession:
         self.merge_ms: list[float] = []
         self.chain_mask: np.ndarray | None = None
         self.chain_origin: tuple[int, int] = (0, 0)
+        self._overview: np.ndarray | None = None
+        self._overview_mask: np.ndarray | None = None
+        self._overview_origin: tuple[float, float] = (0.0, 0.0)
+        self._overview_scale = 1.0
+        self._overview_version = 0
+        self.overview_refine_count = 0
 
     def start(self) -> None:
         self.started = True
+
+    def reset(self) -> None:
+        """Clear captured tiles and overview, keeping the same thresholds."""
+        self.started = False
+        self.tiles = []
+        self.edges = []
+        self.rejects = []
+        self._prev = None
+        self._last = None
+        self._pose = None
+        self._anchor_id = None
+        self._polygon = None
+        self._quads = []
+        self._overlap = None
+        self._track_ms = None
+        self._tracked = False
+        self.merge_ms = []
+        self.chain_mask = None
+        self.chain_origin = (0, 0)
+        self._overview = None
+        self._overview_mask = None
+        self._overview_origin = (0.0, 0.0)
+        self._overview_scale = 1.0
+        self._overview_version = 0
+        self.overview_refine_count = 0
 
     def observe(self, frame: np.ndarray) -> ObserveState:
         sharpness = frame_sharpness(frame)
@@ -145,7 +204,7 @@ class StableCaptureSession:
         elif motion > self.max_motion_px:
             message = _MOTION
         else:
-            message = "稳定，可以拍摄"
+            message = _READY
         self._tracked = False
         self._overlap = None
         self._polygon = None
@@ -154,6 +213,13 @@ class StableCaptureSession:
         self._anchor_id = None
         if self.started and self.tiles:
             self._track_union(frame)
+            if self.started and sharp and motion is not None and motion <= self.max_motion_px:
+                if not self._tracked:
+                    message = _LOST
+                elif float(self._overlap or 0.0) < self.min_overlap:
+                    message = _NO_OVERLAP
+                else:
+                    message = _READY_OVERLAP
         return ObserveState(
             started=self.started,
             sharp=sharp,
@@ -206,6 +272,23 @@ class StableCaptureSession:
         if not self._quads:
             return canvas
         return paint_red_union(canvas, self._quads)
+
+    def overview_image(self) -> np.ndarray | None:
+        """Color board overview fused so far. Constrained preview, not a full canvas."""
+        return self._overview
+
+    def overview_meta(self) -> dict:
+        image = self._overview
+        return {
+            "width": None if image is None else int(image.shape[1]),
+            "height": None if image is None else int(image.shape[0]),
+            "tiles": len(self.tiles),
+            "max_side": int(self.overview_max_side),
+            "max_pixels": int(self.overview_max_pixels),
+            "scale": None if image is None else round(float(self._overview_scale), 5),
+            "refine_count": int(self.overview_refine_count),
+            "full_canvas": False,
+        }
 
     def chain_dict(self) -> dict:
         return {
@@ -319,6 +402,8 @@ class StableCaptureSession:
                 }
             )
         corrected, edge_stats = compensate_board_edge(frame)
+        tile.corrected = np.ascontiguousarray(corrected).copy()
+        tile.M_overview = np.asarray(tile.M_to_ref, dtype=np.float64).copy()
         tile.binary = binary_lines(corrected)
         tile.edge_before = edge_stats.get("preview_before")
         tile.edge_after = edge_stats.get("preview_after")
@@ -328,6 +413,7 @@ class StableCaptureSession:
         self.tiles.append(tile)
         merge_started = time.perf_counter()
         self._fuse_chain_mask(tile)
+        self._fuse_overview(tile)
         merge_ms = (time.perf_counter() - merge_started) * 1000.0
         self.merge_ms.append(merge_ms)
         if self.edges:
@@ -378,6 +464,285 @@ class StableCaptureSession:
             flags=cv2.INTER_NEAREST,
         )
         self.chain_mask = cv2.bitwise_or(self.chain_mask, warped)
+
+
+    def _tile_color(self, tile: _Tile) -> np.ndarray:
+        image = tile.corrected if tile.corrected is not None else tile.raw
+        if image.ndim == 2:
+            return cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        return image
+
+    def _overview_pose(self, tile: _Tile) -> np.ndarray:
+        if tile.M_overview is not None:
+            return np.asarray(tile.M_overview, dtype=np.float64)
+        return np.asarray(tile.M_to_ref, dtype=np.float64)
+
+    def _world_bounds(self, tiles: list[_Tile] | None = None) -> tuple[float, float, float, float] | None:
+        items = self.tiles if tiles is None else tiles
+        if not items:
+            return None
+        corners = [project_tile_quad(self._overview_pose(tile), tile.width, tile.height) for tile in items]
+        points = np.vstack(corners)
+        return (
+            float(np.min(points[:, 0])),
+            float(np.min(points[:, 1])),
+            float(np.max(points[:, 0])),
+            float(np.max(points[:, 1])),
+        )
+
+    def _fit_overview_scale(self, span_x: float, span_y: float) -> float:
+        span_x = max(float(span_x), 1.0)
+        span_y = max(float(span_y), 1.0)
+        scale = 1.0
+        scale = min(scale, self.overview_max_side / span_x, self.overview_max_side / span_y)
+        scale = min(scale, math.sqrt(self.overview_max_pixels / (span_x * span_y)))
+        return max(0.05, min(1.0, scale))
+
+    def _canvas_size(self, bounds: tuple[float, float, float, float], scale: float) -> tuple[int, int]:
+        width = max(1, int(math.ceil((bounds[2] - bounds[0]) * scale)))
+        height = max(1, int(math.ceil((bounds[3] - bounds[1]) * scale)))
+        return width, height
+
+    def _plan_overview(self, bounds_raw: tuple[float, float, float, float]) -> tuple[tuple[float, float, float, float], float, tuple[int, int]]:
+        min_x, min_y, max_x, max_y = bounds_raw
+        raw_w = max(max_x - min_x, 1.0)
+        raw_h = max(max_y - min_y, 1.0)
+        scale = 1.0
+        for _ in range(4):
+            margin = self.overview_margin_px / max(scale, 1e-6)
+            scale = self._fit_overview_scale(raw_w + 2.0 * margin, raw_h + 2.0 * margin)
+        margin = self.overview_margin_px / max(scale, 1e-6)
+        bounds = (min_x - margin, min_y - margin, max_x + margin, max_y + margin)
+        size = self._canvas_size(bounds, scale)
+        while (
+            size[0] > self.overview_max_side
+            or size[1] > self.overview_max_side
+            or size[0] * size[1] > self.overview_max_pixels
+        ) and scale > 0.05:
+            scale = max(0.05, scale * 0.95)
+            margin = self.overview_margin_px / max(scale, 1e-6)
+            bounds = (min_x - margin, min_y - margin, max_x + margin, max_y + margin)
+            size = self._canvas_size(bounds, scale)
+        return bounds, scale, size
+
+    def _world_to_overview(self) -> np.ndarray:
+        scale = float(self._overview_scale)
+        origin_x, origin_y = self._overview_origin
+        return np.array(
+            [[scale, 0.0, -origin_x * scale], [0.0, scale, -origin_y * scale]],
+            dtype=np.float64,
+        )
+
+    def _allocate_overview(self, origin: tuple[float, float], scale: float, size: tuple[int, int]) -> None:
+        width, height = size
+        self._overview = np.zeros((height, width, 3), dtype=np.uint8)
+        self._overview_mask = np.zeros((height, width), dtype=np.uint8)
+        self._overview_origin = (float(origin[0]), float(origin[1]))
+        self._overview_scale = float(scale)
+
+    def _expand_overview(self, new_origin: tuple[float, float], new_size: tuple[int, int]) -> None:
+        assert self._overview is not None and self._overview_mask is not None
+        old = self._overview
+        old_mask = self._overview_mask
+        old_origin = self._overview_origin
+        scale = self._overview_scale
+        new_w, new_h = new_size
+        dx = int(round((old_origin[0] - new_origin[0]) * scale))
+        dy = int(round((old_origin[1] - new_origin[1]) * scale))
+        canvas = np.zeros((new_h, new_w, 3), dtype=np.uint8)
+        mask = np.zeros((new_h, new_w), dtype=np.uint8)
+        x0, y0 = max(0, dx), max(0, dy)
+        sx0, sy0 = max(0, -dx), max(0, -dy)
+        copy_w = min(old.shape[1] - sx0, new_w - x0)
+        copy_h = min(old.shape[0] - sy0, new_h - y0)
+        if copy_w > 0 and copy_h > 0:
+            canvas[y0 : y0 + copy_h, x0 : x0 + copy_w] = old[sy0 : sy0 + copy_h, sx0 : sx0 + copy_w]
+            mask[y0 : y0 + copy_h, x0 : x0 + copy_w] = old_mask[sy0 : sy0 + copy_h, sx0 : sx0 + copy_w]
+        self._overview = canvas
+        self._overview_mask = mask
+        self._overview_origin = (float(new_origin[0]), float(new_origin[1]))
+
+    def _rebuild_overview(self, tiles: list[_Tile], scale: float) -> None:
+        bounds_raw = self._world_bounds(tiles)
+        if bounds_raw is None:
+            self._overview = None
+            self._overview_mask = None
+            return
+        bounds, planned, size = self._plan_overview(bounds_raw)
+        scale = min(float(scale), planned)
+        bounds = (
+            bounds_raw[0] - self.overview_margin_px / max(scale, 1e-6),
+            bounds_raw[1] - self.overview_margin_px / max(scale, 1e-6),
+            bounds_raw[2] + self.overview_margin_px / max(scale, 1e-6),
+            bounds_raw[3] + self.overview_margin_px / max(scale, 1e-6),
+        )
+        size = self._canvas_size(bounds, scale)
+        self._allocate_overview((bounds[0], bounds[1]), scale, size)
+        for item in tiles:
+            self._blend_overview_tile(item)
+
+    def _grow_overview(self, bounds_raw: tuple[float, float, float, float], settled: list[_Tile]) -> None:
+        if self._overview is None:
+            return
+        margin = self.overview_margin_px / max(self._overview_scale, 1e-6)
+        old_x, old_y = self._overview_origin
+        old_max_x = old_x + self._overview.shape[1] / max(self._overview_scale, 1e-6)
+        old_max_y = old_y + self._overview.shape[0] / max(self._overview_scale, 1e-6)
+        new_origin = (min(old_x, bounds_raw[0] - margin), min(old_y, bounds_raw[1] - margin))
+        new_max = (max(old_max_x, bounds_raw[2] + margin), max(old_max_y, bounds_raw[3] + margin))
+        new_size = self._canvas_size((new_origin[0], new_origin[1], new_max[0], new_max[1]), self._overview_scale)
+        exceeds = (
+            new_size[0] > self.overview_max_side
+            or new_size[1] > self.overview_max_side
+            or new_size[0] * new_size[1] > self.overview_max_pixels
+        )
+        if exceeds:
+            _bounds, scale, _size = self._plan_overview(bounds_raw)
+            self._rebuild_overview(settled, scale)
+            return
+        if (
+            new_size[0] != self._overview.shape[1]
+            or new_size[1] != self._overview.shape[0]
+            or new_origin[0] < old_x - 1e-6
+            or new_origin[1] < old_y - 1e-6
+        ):
+            self._expand_overview(new_origin, new_size)
+
+    def _blend_overview_tile(self, tile: _Tile) -> None:
+        if self._overview is None or self._overview_mask is None:
+            return
+        image = self._tile_color(tile)
+        transform = _compose_m(self._world_to_overview(), self._overview_pose(tile))
+        height, width = image.shape[:2]
+        size = (self._overview.shape[1], self._overview.shape[0])
+        warped = cv2.warpAffine(
+            image,
+            transform,
+            size,
+            flags=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=(0, 0, 0),
+        )
+        mask = cv2.warpAffine(
+            np.full((height, width), 255, dtype=np.uint8),
+            transform,
+            size,
+            flags=cv2.INTER_NEAREST,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=0,
+        )
+        if not np.any(mask):
+            return
+        existing = self._overview_mask > 0
+        incoming = mask > 0
+        new_area = incoming & ~existing
+        overlap = incoming & existing
+        distance = cv2.distanceTransform(mask, cv2.DIST_L2, 5)
+        alpha = np.clip(distance / float(max(1, self.overview_feather_px)), 0.0, 1.0)
+        alpha[new_area] = 1.0
+        if np.any(overlap):
+            alpha[overlap] = np.minimum(alpha[overlap], 0.55)
+        blended = self._overview.astype(np.float32) * (1.0 - alpha[..., None]) + warped.astype(np.float32) * alpha[..., None]
+        self._overview = np.clip(blended, 0, 255).astype(np.uint8)
+        self._overview_mask = np.where(incoming, np.uint8(255), self._overview_mask)
+        self._overview_version += 1
+
+    def _refine_overview_tile(self, tile: _Tile) -> None:
+        """Light ECC on overlap edges only. Failures are skipped; M_to_ref is unchanged."""
+        if (
+            not self.overview_refine
+            or self._overview is None
+            or self._overview_mask is None
+            or not np.any(self._overview_mask)
+        ):
+            return
+        image = self._tile_color(tile)
+        placed = _compose_m(self._world_to_overview(), self._overview_pose(tile))
+        size = (self._overview.shape[1], self._overview.shape[0])
+        height, width = image.shape[:2]
+        warped = cv2.warpAffine(
+            image,
+            placed,
+            size,
+            flags=cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=(0, 0, 0),
+        )
+        mask = cv2.warpAffine(
+            np.full((height, width), 255, dtype=np.uint8),
+            placed,
+            size,
+            flags=cv2.INTER_NEAREST,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=0,
+        )
+        overlap = ((mask > 0) & (self._overview_mask > 0)).astype(np.uint8)
+        if int(np.count_nonzero(overlap)) < 2500:
+            return
+        x, y, roi_w, roi_h = cv2.boundingRect(overlap)
+        pad = 8
+        x0 = max(0, x - pad)
+        y0 = max(0, y - pad)
+        x1 = min(self._overview.shape[1], x + roi_w + pad)
+        y1 = min(self._overview.shape[0], y + roi_h + pad)
+        if x1 - x0 < 24 or y1 - y0 < 24:
+            return
+        template = cv2.cvtColor(self._overview[y0:y1, x0:x1], cv2.COLOR_BGR2GRAY)
+        moving = cv2.cvtColor(warped[y0:y1, x0:x1], cv2.COLOR_BGR2GRAY)
+        kernel = np.ones((3, 3), dtype=np.uint8)
+        template_edges = cv2.dilate(cv2.Canny(template, 35, 110), kernel, iterations=1)
+        moving_edges = cv2.dilate(cv2.Canny(moving, 35, 110), kernel, iterations=1)
+        warp = np.eye(2, 3, dtype=np.float32)
+        criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 40, 1e-4)
+        try:
+            score, warp = cv2.findTransformECC(
+                template_edges.astype(np.float32),
+                moving_edges.astype(np.float32),
+                warp,
+                cv2.MOTION_EUCLIDEAN,
+                criteria,
+                overlap[y0:y1, x0:x1],
+                5,
+            )
+        except cv2.error:
+            return
+        if not np.isfinite(score) or float(score) < 0.18:
+            return
+        shift = math.hypot(float(warp[0, 2]), float(warp[1, 2]))
+        angle = abs(math.degrees(math.atan2(float(warp[1, 0]), float(warp[0, 0]))))
+        if shift > 16.0 or angle > 2.5:
+            return
+        if shift < 0.05 and angle < 0.02:
+            return
+        correction = _compose_m(_translate_m(x0, y0), _compose_m(np.asarray(warp, dtype=np.float64), _translate_m(-x0, -y0)))
+        try:
+            tile.M_overview = _compose_m(_invert_m(self._world_to_overview()), _compose_m(correction, placed))
+        except np.linalg.LinAlgError:
+            return
+        self.overview_refine_count += 1
+
+    def _fuse_overview(self, tile: _Tile) -> None:
+        """Warp this tile's color into a constrained overview; shrink and rebuild instead of dropping."""
+        if tile.M_overview is None:
+            tile.M_overview = np.asarray(tile.M_to_ref, dtype=np.float64).copy()
+        settled = [item for item in self.tiles if item is not tile]
+        bounds_raw = self._world_bounds(self.tiles)
+        if bounds_raw is None:
+            return
+        if self._overview is None or not settled:
+            bounds, scale, size = self._plan_overview(self._world_bounds([tile]) or bounds_raw)
+            self._allocate_overview((bounds[0], bounds[1]), scale, size)
+            self._blend_overview_tile(tile)
+            return
+        _planned_bounds, planned_scale, _planned_size = self._plan_overview(bounds_raw)
+        if planned_scale < self._overview_scale * 0.999:
+            self._rebuild_overview(settled, planned_scale)
+        self._grow_overview(bounds_raw, settled)
+        self._refine_overview_tile(tile)
+        updated = self._world_bounds(self.tiles)
+        if updated is not None:
+            self._grow_overview(updated, settled)
+        self._blend_overview_tile(tile)
 
     def _reject(self, reason: str, overlap: float | None = None, elapsed_ms: float = 0.0) -> CaptureDecision:
         self.rejects.append({"reason": reason, "overlap": overlap})
@@ -709,6 +1074,22 @@ def _apply_m(matrix_2x3: np.ndarray, points: np.ndarray) -> np.ndarray:
     return pts @ matrix[:, :2].T + matrix[:, 2]
 
 
+def overview_summary_fields(session: StableCaptureSession, out_dir: Path | None = None) -> dict:
+    meta = session.overview_meta()
+    fields = {
+        "overview_size": None if meta["width"] is None else [meta["width"], meta["height"]],
+        "overview_tiles": meta["tiles"],
+        "overview_max_side": meta["max_side"],
+        "overview_max_pixels": meta["max_pixels"],
+        "overview_scale": meta["scale"],
+        "overview_refine_count": meta["refine_count"],
+        "full_canvas": False,
+    }
+    if out_dir is not None and session.overview_image() is not None:
+        fields["overview"] = str(Path(out_dir) / "overview.png")
+    return fields
+
+
 def save_session(session: StableCaptureSession, out_dir: Path, *, board_id: str, source: str) -> dict:
     out_dir = Path(out_dir)
     if out_dir.exists():
@@ -730,6 +1111,8 @@ def save_session(session: StableCaptureSession, out_dir: Path, *, board_id: str,
     track_times = [edge.get("track_ms") for edge in session.edges if edge.get("track_ms") is not None]
     if session.chain_mask is not None:
         cv2.imwrite(str(out_dir / "chain_mask.png"), session.chain_mask)
+    if session.overview_image() is not None:
+        cv2.imwrite(str(out_dir / "overview.png"), session.overview_image())
     summary = {
         "board_id": board_id,
         "source": source,
@@ -748,6 +1131,7 @@ def save_session(session: StableCaptureSession, out_dir: Path, *, board_id: str,
         "topology_db": str(out_dir / "topology_db.json"),
         "coverage": str(out_dir / "coverage.png"),
     }
+    summary.update(overview_summary_fields(session, out_dir))
     (out_dir / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return summary
 
@@ -846,6 +1230,7 @@ def run_board_demo(image: np.ndarray, out_dir: Path, *, board_id: str, source: s
     summary["last_tile_red_px"] = last_px
     summary["union_over_last"] = None if last_px <= 0 else round(union_px / last_px, 3)
     summary["full_canvas"] = False
+    summary.update(overview_summary_fields(session, out_dir))
     summary["decisions"] = [item.to_dict() for item in decisions]
     angle_errors = [edge["angle_error_deg"] for edge in session.edges if edge.get("angle_error_deg") is not None]
     summary["angle_error_deg_median"] = None if not angle_errors else round(float(np.median(np.abs(angle_errors))), 3)
@@ -865,6 +1250,58 @@ def run_board_demo(image: np.ndarray, out_dir: Path, *, board_id: str, source: s
     summary["align_dir"] = str(align_dir)
     (Path(out_dir) / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return summary
+
+
+DEMO_WINDOW = (480, 360)
+DEMO_ORIGIN = (80, 160)
+DEMO_STEPS = ((0, 0.0), (70, 4.0), (140, 1.0))
+
+
+def default_sample_global() -> Path | None:
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        candidate = parent / "assets" / "samples" / "SAMPLE-PARTIAL-001" / "global_ref.png"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def default_scan_export_dir(board_id: str, root: Path | None = None) -> Path:
+    stamp = time.strftime("%Y%m%d-%H%M%S")
+    base = root
+    if base is None:
+        sample = default_sample_global()
+        base = sample.parents[3] if sample is not None else Path.cwd()
+    return Path(base) / "artifacts" / "scan_maps" / f"{board_id}-{stamp}"
+
+
+def demo_scan_frames(image: np.ndarray) -> list[np.ndarray]:
+    """Overlapping windows used by the board demo (accepted shots only)."""
+    window_w, window_h = DEMO_WINDOW
+    origin_x, origin_y = DEMO_ORIGIN
+    frames = []
+    for step, angle in DEMO_STEPS:
+        frame, _truth = _rotated_crop(image, origin_x + step, origin_y, window_w, window_h, angle)
+        frames.append(frame)
+    return frames
+
+
+def demo_disconnected_frame(image: np.ndarray) -> np.ndarray:
+    window_w, window_h = DEMO_WINDOW
+    origin_x, origin_y = DEMO_ORIGIN
+    return image[origin_y + 780 : origin_y + 780 + window_h, origin_x : origin_x + window_w].copy()
+
+
+def run_demo_scan(out_dir: Path | None = None, *, board_id: str = "SAMPLE-PARTIAL-001") -> dict:
+    """Headless sample scan that writes overview.png. No Qt required."""
+    image_path = default_sample_global()
+    if image_path is None:
+        raise FileNotFoundError("找不到样例 assets/samples/SAMPLE-PARTIAL-001/global_ref.png")
+    image = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+    if image is None:
+        raise FileNotFoundError(f"无法读取 {image_path}")
+    destination = Path(out_dir) if out_dir is not None else default_scan_export_dir(board_id, image_path.parents[3])
+    return run_board_demo(image, destination, board_id=board_id, source=str(image_path))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -892,6 +1329,8 @@ def main(argv: list[str] | None = None) -> int:
         "edge_rms_before_median": summary.get("edge_rms_before_median"),
         "edge_rms_after_median": summary.get("edge_rms_after_median"),
         "full_canvas": False,
+        "overview": summary.get("overview"),
+        "overview_size": summary.get("overview_size"),
         "summary": str(args.out / "summary.json"),
     }
     print(json.dumps(brief, ensure_ascii=False))
