@@ -1,0 +1,249 @@
+{
+  "board_id": "SAMPLE-PARTIAL-001",
+  "source": "assets/samples/SAMPLE-PARTIAL-001/global_ref.png",
+  "schema_version": "0.2-topo",
+  "library": {
+    "hole": 43,
+    "pad": 293,
+    "slot": 39,
+    "points": 375
+  },
+  "detect_scale": 1.0,
+  "topology": "assets/topology/SAMPLE-PARTIAL-001.json",
+  "project": "assets/projects/SAMPLE-PARTIAL-001.json",
+  "queries_total": 7,
+  "queries_matched": 7,
+  "queries_failed": 0,
+  "pose_error_px": 0.0,
+  "pose_error_deg": 0.0,
+  "inliers_median": 66.0,
+  "confidence_median": 0.788,
+  "timing_ms": {
+    "extract_library": 45.35,
+    "match_median": 11.05,
+    "total": 257.26
+  },
+  "window": [
+    560,
+    720
+  ],
+  "queries": [
+    {
+      "index": 0,
+      "origin": [
+        26,
+        48
+      ],
+      "window": [
+        560,
+        720
+      ],
+      "rotation_deg": 0.0,
+      "ok": true,
+      "inliers": 81,
+      "confidence": 0.8526,
+      "elapsed_ms": 17.62,
+      "pose_error_px": 0.0,
+      "pose_error_deg": 0.0,
+      "message": "ok",
+      "M": [
+        [
+          1.0,
+          0.0,
+          -26.0
+        ],
+        [
+          0.0,
+          1.0,
+          -48.0
+        ]
+      ]
+    },
+    {
+      "index": 1,
+      "origin": [
+        286,
+        216
+      ],
+      "window": [
+        560,
+        720
+      ],
+      "rotation_deg": 0.0,
+      "ok": true,
+      "inliers": 106,
+      "confidence": 0.876,
+      "elapsed_ms": 12.76,
+      "pose_error_px": 0.0,
+      "pose_error_deg": 0.0,
+      "message": "ok",
+      "M": [
+        [
+          1.0,
+          -0.0,
+          -286.0
+        ],
+        [
+          0.0,
+          1.0,
+          -216.0
+        ]
+      ]
+    },
+    {
+      "index": 2,
+      "origin": [
+        62,
+        504
+      ],
+      "window": [
+        560,
+        720
+      ],
+      "rotation_deg": 0.0,
+      "ok": true,
+      "inliers": 69,
+      "confidence": 0.8023,
+      "elapsed_ms": 11.05,
+      "pose_error_px": 0.0,
+      "pose_error_deg": 0.0,
+      "message": "ok",
+      "M": [
+        [
+          1.0,
+          -0.0,
+          -62.0
+        ],
+        [
+          -0.0,
+          1.0,
+          -504.0
+        ]
+      ]
+    },
+    {
+      "index": 3,
+      "origin": [
+        322,
+        576
+      ],
+      "window": [
+        560,
+        720
+      ],
+      "rotation_deg": 0.0,
+      "ok": true,
+      "inliers": 52,
+      "confidence": 0.7879,
+      "elapsed_ms": 10.08,
+      "pose_error_px": 0.0,
+      "pose_error_deg": 0.0,
+      "message": "ok",
+      "M": [
+        [
+          1.0,
+          0.0,
+          -322.0
+        ],
+        [
+          -0.0,
+          1.0,
+          -576.0
+        ]
+      ]
+    },
+    {
+      "index": 4,
+      "origin": [
+        42,
+        935
+      ],
+      "window": [
+        560,
+        720
+      ],
+      "rotation_deg": 0.0,
+      "ok": true,
+      "inliers": 66,
+      "confidence": 0.7253,
+      "elapsed_ms": 11.17,
+      "pose_error_px": 0.032,
+      "pose_error_deg": 0.0,
+      "message": "ok",
+      "M": [
+        [
+          0.999842,
+          -4e-06,
+          -41.973062
+        ],
+        [
+          4e-06,
+          0.999842,
+          -934.816465
+        ]
+      ]
+    },
+    {
+      "index": 5,
+      "origin": [
+        250,
+        1031
+      ],
+      "window": [
+        560,
+        720
+      ],
+      "rotation_deg": 0.0,
+      "ok": true,
+      "inliers": 18,
+      "confidence": 0.5455,
+      "elapsed_ms": 9.11,
+      "pose_error_px": 0.0,
+      "pose_error_deg": 0.0,
+      "message": "ok",
+      "M": [
+        [
+          1.0,
+          0.0,
+          -250.0
+        ],
+        [
+          -0.0,
+          1.0,
+          -1031.0
+        ]
+      ]
+    },
+    {
+      "index": 6,
+      "origin": [
+        322,
+        576
+      ],
+      "window": [
+        560,
+        720
+      ],
+      "rotation_deg": 8.0,
+      "ok": true,
+      "inliers": 38,
+      "confidence": 0.6129,
+      "elapsed_ms": 6.24,
+      "pose_error_px": 0.731,
+      "pose_error_deg": 0.11,
+      "message": "ok",
+      "M": [
+        [
+          0.990492,
+          0.141149,
+          -447.921883
+        ],
+        [
+          -0.141149,
+          0.990492,
+          -482.635684
+        ]
+      ]
+    }
+  ]
+}

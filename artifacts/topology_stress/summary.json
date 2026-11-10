@@ -1,0 +1,677 @@
+{
+  "primary": [
+    "clean",
+    "medium_dark",
+    "mild_oxidize"
+  ],
+  "window": [
+    560,
+    720
+  ],
+  "library_points": {
+    "hole": 275,
+    "pad": 1302,
+    "slot": 28,
+    "points": 1605
+  },
+  "modes": {
+    "clean": {
+      "matched": 7,
+      "total": 7,
+      "failed": 0,
+      "pose_error_px_median": 0.009,
+      "confidence_median": 0.995,
+      "inliers_median": 415.0,
+      "rows": [
+        {
+          "origin": [
+            26,
+            48
+          ],
+          "ok": true,
+          "inliers": 235,
+          "confidence": 0.9289,
+          "pose_error_px": 0.049,
+          "elapsed_ms": 41.91,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            286,
+            216
+          ],
+          "ok": true,
+          "inliers": 411,
+          "confidence": 1.0,
+          "pose_error_px": 0.0,
+          "elapsed_ms": 69.27,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            62,
+            504
+          ],
+          "ok": true,
+          "inliers": 415,
+          "confidence": 0.9719,
+          "pose_error_px": 0.033,
+          "elapsed_ms": 64.63,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            322,
+            576
+          ],
+          "ok": true,
+          "inliers": 474,
+          "confidence": 0.9958,
+          "pose_error_px": 0.0,
+          "elapsed_ms": 73.82,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            42,
+            935
+          ],
+          "ok": true,
+          "inliers": 436,
+          "confidence": 0.9954,
+          "pose_error_px": 0.019,
+          "elapsed_ms": 59.06,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            250,
+            1031
+          ],
+          "ok": true,
+          "inliers": 526,
+          "confidence": 0.9887,
+          "pose_error_px": 0.009,
+          "elapsed_ms": 81.53,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            480,
+            180
+          ],
+          "ok": true,
+          "inliers": 331,
+          "confidence": 0.997,
+          "pose_error_px": 0.0,
+          "elapsed_ms": 48.19,
+          "message": "ok"
+        }
+      ]
+    },
+    "medium_dark": {
+      "matched": 7,
+      "total": 7,
+      "failed": 0,
+      "pose_error_px_median": 0.194,
+      "confidence_median": 0.888,
+      "inliers_median": 363.0,
+      "rows": [
+        {
+          "origin": [
+            26,
+            48
+          ],
+          "ok": true,
+          "inliers": 207,
+          "confidence": 0.8884,
+          "pose_error_px": 0.603,
+          "elapsed_ms": 27.64,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            286,
+            216
+          ],
+          "ok": true,
+          "inliers": 359,
+          "confidence": 0.8821,
+          "pose_error_px": 0.367,
+          "elapsed_ms": 50.12,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            62,
+            504
+          ],
+          "ok": true,
+          "inliers": 363,
+          "confidence": 0.8875,
+          "pose_error_px": 0.286,
+          "elapsed_ms": 48.94,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            322,
+            576
+          ],
+          "ok": true,
+          "inliers": 426,
+          "confidence": 0.8987,
+          "pose_error_px": 0.152,
+          "elapsed_ms": 56.72,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            42,
+            935
+          ],
+          "ok": true,
+          "inliers": 386,
+          "confidence": 0.904,
+          "pose_error_px": 0.194,
+          "elapsed_ms": 52.4,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            250,
+            1031
+          ],
+          "ok": true,
+          "inliers": 458,
+          "confidence": 0.8876,
+          "pose_error_px": 0.151,
+          "elapsed_ms": 69.49,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            480,
+            180
+          ],
+          "ok": true,
+          "inliers": 287,
+          "confidence": 0.8416,
+          "pose_error_px": 0.159,
+          "elapsed_ms": 41.64,
+          "message": "ok"
+        }
+      ]
+    },
+    "mild_oxidize": {
+      "matched": 6,
+      "total": 7,
+      "failed": 1,
+      "pose_error_px_median": 0.236,
+      "confidence_median": 0.711,
+      "inliers_median": 325.0,
+      "rows": [
+        {
+          "origin": [
+            26,
+            48
+          ],
+          "ok": true,
+          "inliers": 188,
+          "confidence": 0.7015,
+          "pose_error_px": 1.522,
+          "elapsed_ms": 31.29,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            286,
+            216
+          ],
+          "ok": true,
+          "inliers": 314,
+          "confidence": 0.6856,
+          "pose_error_px": 0.195,
+          "elapsed_ms": 55.1,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            62,
+            504
+          ],
+          "ok": true,
+          "inliers": 309,
+          "confidence": 0.6747,
+          "pose_error_px": 0.406,
+          "elapsed_ms": 53.95,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            322,
+            576
+          ],
+          "ok": true,
+          "inliers": 384,
+          "confidence": 0.7259,
+          "pose_error_px": 0.096,
+          "elapsed_ms": 63.89,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            42,
+            935
+          ],
+          "ok": true,
+          "inliers": 336,
+          "confidence": 0.721,
+          "pose_error_px": 0.276,
+          "elapsed_ms": 55.61,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            250,
+            1031
+          ],
+          "ok": true,
+          "inliers": 418,
+          "confidence": 0.7333,
+          "pose_error_px": 0.192,
+          "elapsed_ms": 87.64,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            480,
+            180
+          ],
+          "ok": false,
+          "inliers": 0,
+          "confidence": 0.0,
+          "pose_error_px": null,
+          "elapsed_ms": 45.93,
+          "message": "弱匹配（inliers=41，confidence=0.11）"
+        }
+      ]
+    },
+    "dark": {
+      "matched": 5,
+      "total": 7,
+      "failed": 2,
+      "pose_error_px_median": 0.505,
+      "confidence_median": 0.708,
+      "inliers_median": 308.0,
+      "rows": [
+        {
+          "origin": [
+            26,
+            48
+          ],
+          "ok": false,
+          "inliers": 0,
+          "confidence": 0.0,
+          "pose_error_px": null,
+          "elapsed_ms": 33.96,
+          "message": "弱匹配（inliers=31，confidence=0.11）"
+        },
+        {
+          "origin": [
+            286,
+            216
+          ],
+          "ok": false,
+          "inliers": 0,
+          "confidence": 0.0,
+          "pose_error_px": null,
+          "elapsed_ms": 45.89,
+          "message": "弱匹配（inliers=45，confidence=0.11）"
+        },
+        {
+          "origin": [
+            62,
+            504
+          ],
+          "ok": true,
+          "inliers": 293,
+          "confidence": 0.7077,
+          "pose_error_px": 0.408,
+          "elapsed_ms": 48.3,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            322,
+            576
+          ],
+          "ok": true,
+          "inliers": 357,
+          "confidence": 0.7422,
+          "pose_error_px": 0.383,
+          "elapsed_ms": 55.57,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            42,
+            935
+          ],
+          "ok": true,
+          "inliers": 308,
+          "confidence": 0.7048,
+          "pose_error_px": 0.844,
+          "elapsed_ms": 50.57,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            250,
+            1031
+          ],
+          "ok": true,
+          "inliers": 374,
+          "confidence": 0.722,
+          "pose_error_px": 0.505,
+          "elapsed_ms": 60.76,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            480,
+            180
+          ],
+          "ok": true,
+          "inliers": 219,
+          "confidence": 0.678,
+          "pose_error_px": 1.309,
+          "elapsed_ms": 39.31,
+          "message": "ok"
+        }
+      ]
+    },
+    "oxidize_blur": {
+      "matched": 0,
+      "total": 7,
+      "failed": 7,
+      "pose_error_px_median": null,
+      "confidence_median": null,
+      "inliers_median": null,
+      "rows": [
+        {
+          "origin": [
+            26,
+            48
+          ],
+          "ok": false,
+          "inliers": 0,
+          "confidence": 0.0,
+          "pose_error_px": null,
+          "elapsed_ms": 45.49,
+          "message": "弱匹配（inliers=21，confidence=0.05）"
+        },
+        {
+          "origin": [
+            286,
+            216
+          ],
+          "ok": false,
+          "inliers": 0,
+          "confidence": 0.0,
+          "pose_error_px": null,
+          "elapsed_ms": 97.77,
+          "message": "弱匹配（inliers=100，confidence=0.15）"
+        },
+        {
+          "origin": [
+            62,
+            504
+          ],
+          "ok": false,
+          "inliers": 0,
+          "confidence": 0.0,
+          "pose_error_px": null,
+          "elapsed_ms": 80.0,
+          "message": "弱匹配（inliers=40，confidence=0.06）"
+        },
+        {
+          "origin": [
+            322,
+            576
+          ],
+          "ok": false,
+          "inliers": 0,
+          "confidence": 0.0,
+          "pose_error_px": null,
+          "elapsed_ms": 83.3,
+          "message": "弱匹配（inliers=68，confidence=0.10）"
+        },
+        {
+          "origin": [
+            42,
+            935
+          ],
+          "ok": false,
+          "inliers": 0,
+          "confidence": 0.0,
+          "pose_error_px": null,
+          "elapsed_ms": 77.47,
+          "message": "弱匹配（inliers=79，confidence=0.12）"
+        },
+        {
+          "origin": [
+            250,
+            1031
+          ],
+          "ok": false,
+          "inliers": 0,
+          "confidence": 0.0,
+          "pose_error_px": null,
+          "elapsed_ms": 103.11,
+          "message": "弱匹配（inliers=50，confidence=0.07）"
+        },
+        {
+          "origin": [
+            480,
+            180
+          ],
+          "ok": false,
+          "inliers": 0,
+          "confidence": 0.0,
+          "pose_error_px": null,
+          "elapsed_ms": 64.02,
+          "message": "弱匹配（inliers=37，confidence=0.07）"
+        }
+      ]
+    },
+    "bright_glare": {
+      "matched": 7,
+      "total": 7,
+      "failed": 0,
+      "pose_error_px_median": 0.02,
+      "confidence_median": 0.965,
+      "inliers_median": 393.0,
+      "rows": [
+        {
+          "origin": [
+            26,
+            48
+          ],
+          "ok": true,
+          "inliers": 228,
+          "confidence": 0.9268,
+          "pose_error_px": 0.074,
+          "elapsed_ms": 33.09,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            286,
+            216
+          ],
+          "ok": true,
+          "inliers": 379,
+          "confidence": 0.9619,
+          "pose_error_px": 0.02,
+          "elapsed_ms": 53.25,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            62,
+            504
+          ],
+          "ok": true,
+          "inliers": 393,
+          "confidence": 0.9585,
+          "pose_error_px": 0.03,
+          "elapsed_ms": 53.78,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            322,
+            576
+          ],
+          "ok": true,
+          "inliers": 446,
+          "confidence": 0.9654,
+          "pose_error_px": 0.008,
+          "elapsed_ms": 61.66,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            42,
+            935
+          ],
+          "ok": true,
+          "inliers": 436,
+          "confidence": 0.9954,
+          "pose_error_px": 0.019,
+          "elapsed_ms": 59.91,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            250,
+            1031
+          ],
+          "ok": true,
+          "inliers": 526,
+          "confidence": 0.9887,
+          "pose_error_px": 0.009,
+          "elapsed_ms": 81.16,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            480,
+            180
+          ],
+          "ok": true,
+          "inliers": 319,
+          "confidence": 0.9755,
+          "pose_error_px": 0.033,
+          "elapsed_ms": 48.82,
+          "message": "ok"
+        }
+      ]
+    },
+    "burn_patch": {
+      "matched": 7,
+      "total": 7,
+      "failed": 0,
+      "pose_error_px_median": 0.009,
+      "confidence_median": 0.993,
+      "inliers_median": 400.0,
+      "rows": [
+        {
+          "origin": [
+            26,
+            48
+          ],
+          "ok": true,
+          "inliers": 215,
+          "confidence": 0.9149,
+          "pose_error_px": 0.08,
+          "elapsed_ms": 30.76,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            286,
+            216
+          ],
+          "ok": true,
+          "inliers": 400,
+          "confidence": 0.9926,
+          "pose_error_px": 0.0,
+          "elapsed_ms": 57.89,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            62,
+            504
+          ],
+          "ok": true,
+          "inliers": 392,
+          "confidence": 0.9608,
+          "pose_error_px": 0.036,
+          "elapsed_ms": 56.4,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            322,
+            576
+          ],
+          "ok": true,
+          "inliers": 471,
+          "confidence": 0.9937,
+          "pose_error_px": 0.0,
+          "elapsed_ms": 69.2,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            42,
+            935
+          ],
+          "ok": true,
+          "inliers": 436,
+          "confidence": 0.9954,
+          "pose_error_px": 0.019,
+          "elapsed_ms": 61.75,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            250,
+            1031
+          ],
+          "ok": true,
+          "inliers": 526,
+          "confidence": 0.9887,
+          "pose_error_px": 0.009,
+          "elapsed_ms": 94.9,
+          "message": "ok"
+        },
+        {
+          "origin": [
+            480,
+            180
+          ],
+          "ok": true,
+          "inliers": 331,
+          "confidence": 0.997,
+          "pose_error_px": 0.0,
+          "elapsed_ms": 50.48,
+          "message": "ok"
+        }
+      ]
+    }
+  }
+}

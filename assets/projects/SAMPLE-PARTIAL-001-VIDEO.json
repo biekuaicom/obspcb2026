@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.1",
+  "board_id": "SAMPLE-PARTIAL-001-VIDEO",
+  "name": "SAMPLE-PARTIAL-001-VIDEO",
+  "global_map_path": "../maps/SAMPLE-PARTIAL-001-VIDEO.png",
+  "map_source": "video_mosaic",
+  "fiducials": [],
+  "components": [],
+  "meta": {
+    "mapping": {
+      "mode": "video_mosaic",
+      "state": "MosaicReady",
+      "frames_total": 96,
+      "frames_used": 96,
+      "frames_skipped": 0,
+      "canvas_size": [
+        1691,
+        2697
+      ],
+      "coverage_hint": 0.4550212065139289,
+      "overlap_hint": 0.85,
+      "motion": "feature",
+      "scan": {
+        "pattern": "serpentine",
+        "source": "assets/samples/SAMPLE-PARTIAL-001/global_ref.png",
+        "frame_count": 96,
+        "window_size": [
+          562,
+          729
+        ],
+        "step": {
+          "dx": 84,
+          "dy": 109
+        },
+        "overlap_x": 0.8505338078291815,
+        "overlap_y": 0.850480109739369,
+        "rows": 12,
+        "cols": 8
+      },
+      "compare": {
+        "ok": true,
+        "ncc": 0.992485887441815,
+        "coverage": 0.9995633335263351,
+        "mean_abs": 3.556071792619124,
+        "inliers": 2149,
+        "matches": 2221,
+        "notes": "inliers=2149 matches=2221 ncc=0.992 coverage=1.0"
+      }
+    }
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "tiles": [
+    {
+      "id": "cap-000",
+      "image_size": {
+        "width": 480,
+        "height": 360
+      },
+      "points": 121,
+      "M_to_ref": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ]
+      ]
+    },
+    {
+      "id": "cap-001",
+      "image_size": {
+        "width": 480,
+        "height": 360
+      },
+      "points": 130,
+      "M_to_ref": [
+        [
+          0.998081,
+          -0.070388,
+          83.129956
+        ],
+        [
+          0.070388,
+          0.998081,
+          -16.668791
+        ]
+      ]
+    },
+    {
+      "id": "cap-002",
+      "image_size": {
+        "width": 480,
+        "height": 360
+      },
+      "points": 144,
+      "M_to_ref": [
+        [
+          1.003796,
+          -0.019452,
+          142.703266
+        ],
+        [
+          0.019452,
+          1.003796,
+          -5.536865
+        ]
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "src": "cap-000",
+      "dst": "cap-001",
+      "M": [
+        [
+          0.996965,
+          0.070309,
+          -81.705656
+        ],
+        [
+          -0.070309,
+          0.996965,
+          22.46296
+        ]
+      ],
+      "M_to_ref": [
+        [
+          0.998081,
+          -0.070388,
+          83.129956
+        ],
+        [
+          0.070388,
+          0.998081,
+          -16.668791
+        ]
+      ],
+      "overlap": 0.837,
+      "angle_deg": -4.034,
+      "reflection": false,
+      "direction": "previous_tile_to_current_frame",
+      "edge": {
+        "kind": "line",
+        "axis": "y+",
+        "rms_before": 4.652,
+        "rms_after": 2.708,
+        "samples": 241
+      },
+      "merge_ms": 0.25,
+      "track_ms": 12.06,
+      "angle_truth_deg": -4.0,
+      "angle_error_deg": -0.034
+    },
+    {
+      "src": "cap-001",
+      "dst": "cap-002",
+      "M": [
+        [
+          0.995291,
+          -0.050834,
+          -59.540556
+        ],
+        [
+          0.050834,
+          0.995291,
+          -9.936014
+        ]
+      ],
+      "M_to_ref": [
+        [
+          1.003796,
+          -0.019452,
+          142.703266
+        ],
+        [
+          0.019452,
+          1.003796,
+          -5.536865
+        ]
+      ],
+      "overlap": 0.8469,
+      "angle_deg": 2.924,
+      "reflection": false,
+      "direction": "previous_tile_to_current_frame",
+      "edge": {
+        "kind": "arc",
+        "axis": "y+",
+        "rms_before": 3.346,
+        "rms_after": 1.506,
+        "samples": 184
+      },
+      "merge_ms": 0.2,
+      "track_ms": 12.79,
+      "angle_truth_deg": 3.0,
+      "angle_error_deg": -0.076
+    }
+  ],
+  "rejects": [
+    {
+      "reason": "画面模糊，等待清晰",
+      "overlap": null
+    },
+    {
+      "reason": "未能跟上已拍区域，请退回红色覆盖处重拍",
+      "overlap": null
+    }
+  ]
+}

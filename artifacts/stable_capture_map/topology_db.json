@@ -1,0 +1,7372 @@
+{
+  "schema_version": "0.2-topo",
+  "board_id": "SAMPLE-PARTIAL-001",
+  "source": "assets/samples/SAMPLE-PARTIAL-001/global_ref.png",
+  "kind": "stable_capture_chain",
+  "chain_frame": "cap-000",
+  "image_size": null,
+  "chain_mask_size": [
+    643,
+    364
+  ],
+  "full_canvas": false,
+  "points": [
+    {
+      "id": "cap-000:slot-0001",
+      "kind": "slot",
+      "xy": [
+        249.89,
+        126.2
+      ],
+      "area": 381.0,
+      "circularity": 0.102,
+      "xy_tile": [
+        249.89,
+        126.2
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0002",
+      "kind": "pad",
+      "xy": [
+        205.73,
+        66.97
+      ],
+      "area": 280.5,
+      "circularity": 0.106,
+      "xy_tile": [
+        205.73,
+        66.97
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0003",
+      "kind": "pad",
+      "xy": [
+        101.76,
+        230.55
+      ],
+      "area": 213.5,
+      "circularity": 0.087,
+      "xy_tile": [
+        101.76,
+        230.55
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0004",
+      "kind": "pad",
+      "xy": [
+        370.1,
+        73.43
+      ],
+      "area": 196.0,
+      "circularity": 0.147,
+      "xy_tile": [
+        370.1,
+        73.43
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0005",
+      "kind": "pad",
+      "xy": [
+        81.51,
+        188.87
+      ],
+      "area": 187.0,
+      "circularity": 0.201,
+      "xy_tile": [
+        81.51,
+        188.87
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0006",
+      "kind": "pad",
+      "xy": [
+        44.41,
+        66.88
+      ],
+      "area": 156.5,
+      "circularity": 0.334,
+      "xy_tile": [
+        44.41,
+        66.88
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0007",
+      "kind": "pad",
+      "xy": [
+        89.74,
+        90.41
+      ],
+      "area": 119.0,
+      "circularity": 0.234,
+      "xy_tile": [
+        89.74,
+        90.41
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0008",
+      "kind": "pad",
+      "xy": [
+        299.68,
+        252.86
+      ],
+      "area": 118.5,
+      "circularity": 0.192,
+      "xy_tile": [
+        299.68,
+        252.86
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0009",
+      "kind": "pad",
+      "xy": [
+        107.56,
+        275.62
+      ],
+      "area": 117.5,
+      "circularity": 0.184,
+      "xy_tile": [
+        107.56,
+        275.62
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0010",
+      "kind": "pad",
+      "xy": [
+        211.25,
+        151.85
+      ],
+      "area": 112.5,
+      "circularity": 0.415,
+      "xy_tile": [
+        211.25,
+        151.85
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0011",
+      "kind": "pad",
+      "xy": [
+        428.48,
+        325.62
+      ],
+      "area": 108.5,
+      "circularity": 0.177,
+      "xy_tile": [
+        428.48,
+        325.62
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0012",
+      "kind": "pad",
+      "xy": [
+        423.43,
+        195.14
+      ],
+      "area": 108.5,
+      "circularity": 0.282,
+      "xy_tile": [
+        423.43,
+        195.14
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0013",
+      "kind": "pad",
+      "xy": [
+        176.15,
+        149.66
+      ],
+      "area": 98.0,
+      "circularity": 0.206,
+      "xy_tile": [
+        176.15,
+        149.66
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0014",
+      "kind": "pad",
+      "xy": [
+        154.86,
+        307.42
+      ],
+      "area": 97.0,
+      "circularity": 0.469,
+      "xy_tile": [
+        154.86,
+        307.42
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0015",
+      "kind": "pad",
+      "xy": [
+        316.11,
+        15.01
+      ],
+      "area": 95.0,
+      "circularity": 0.357,
+      "xy_tile": [
+        316.11,
+        15.01
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0016",
+      "kind": "pad",
+      "xy": [
+        430.18,
+        75.35
+      ],
+      "area": 94.5,
+      "circularity": 0.188,
+      "xy_tile": [
+        430.18,
+        75.35
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0017",
+      "kind": "pad",
+      "xy": [
+        136.23,
+        26.61
+      ],
+      "area": 88.5,
+      "circularity": 0.565,
+      "xy_tile": [
+        136.23,
+        26.61
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0018",
+      "kind": "pad",
+      "xy": [
+        315.82,
+        282.19
+      ],
+      "area": 85.5,
+      "circularity": 0.156,
+      "xy_tile": [
+        315.82,
+        282.19
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0019",
+      "kind": "pad",
+      "xy": [
+        19.26,
+        309.17
+      ],
+      "area": 84.5,
+      "circularity": 0.605,
+      "xy_tile": [
+        19.26,
+        309.17
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0020",
+      "kind": "pad",
+      "xy": [
+        428.3,
+        270.92
+      ],
+      "area": 83.5,
+      "circularity": 0.164,
+      "xy_tile": [
+        428.3,
+        270.92
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0021",
+      "kind": "pad",
+      "xy": [
+        432.38,
+        242.0
+      ],
+      "area": 82.5,
+      "circularity": 0.317,
+      "xy_tile": [
+        432.38,
+        242.0
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0022",
+      "kind": "pad",
+      "xy": [
+        257.51,
+        284.27
+      ],
+      "area": 80.5,
+      "circularity": 0.267,
+      "xy_tile": [
+        257.51,
+        284.27
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0023",
+      "kind": "pad",
+      "xy": [
+        446.49,
+        11.82
+      ],
+      "area": 78.5,
+      "circularity": 0.301,
+      "xy_tile": [
+        446.49,
+        11.82
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0024",
+      "kind": "pad",
+      "xy": [
+        426.73,
+        298.9
+      ],
+      "area": 78.0,
+      "circularity": 0.226,
+      "xy_tile": [
+        426.73,
+        298.9
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0025",
+      "kind": "pad",
+      "xy": [
+        93.65,
+        318.56
+      ],
+      "area": 77.0,
+      "circularity": 0.39,
+      "xy_tile": [
+        93.65,
+        318.56
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0026",
+      "kind": "pad",
+      "xy": [
+        183.59,
+        76.83
+      ],
+      "area": 77.0,
+      "circularity": 0.295,
+      "xy_tile": [
+        183.59,
+        76.83
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0027",
+      "kind": "hole",
+      "xy": [
+        268.68,
+        45.92
+      ],
+      "area": 77.0,
+      "circularity": 0.665,
+      "xy_tile": [
+        268.68,
+        45.92
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0028",
+      "kind": "pad",
+      "xy": [
+        57.56,
+        215.25
+      ],
+      "area": 76.5,
+      "circularity": 0.331,
+      "xy_tile": [
+        57.56,
+        215.25
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0029",
+      "kind": "pad",
+      "xy": [
+        427.78,
+        312.6
+      ],
+      "area": 75.5,
+      "circularity": 0.177,
+      "xy_tile": [
+        427.78,
+        312.6
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0030",
+      "kind": "hole",
+      "xy": [
+        206.0,
+        22.61
+      ],
+      "area": 74.5,
+      "circularity": 0.694,
+      "xy_tile": [
+        206.0,
+        22.61
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0031",
+      "kind": "pad",
+      "xy": [
+        140.82,
+        187.66
+      ],
+      "area": 74.0,
+      "circularity": 0.453,
+      "xy_tile": [
+        140.82,
+        187.66
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0032",
+      "kind": "pad",
+      "xy": [
+        346.83,
+        201.34
+      ],
+      "area": 73.5,
+      "circularity": 0.143,
+      "xy_tile": [
+        346.83,
+        201.34
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0033",
+      "kind": "pad",
+      "xy": [
+        266.61,
+        340.14
+      ],
+      "area": 73.0,
+      "circularity": 0.327,
+      "xy_tile": [
+        266.61,
+        340.14
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0034",
+      "kind": "pad",
+      "xy": [
+        58.2,
+        230.77
+      ],
+      "area": 73.0,
+      "circularity": 0.291,
+      "xy_tile": [
+        58.2,
+        230.77
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0035",
+      "kind": "pad",
+      "xy": [
+        280.94,
+        340.7
+      ],
+      "area": 72.5,
+      "circularity": 0.318,
+      "xy_tile": [
+        280.94,
+        340.7
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0036",
+      "kind": "pad",
+      "xy": [
+        252.88,
+        340.74
+      ],
+      "area": 72.5,
+      "circularity": 0.318,
+      "xy_tile": [
+        252.88,
+        340.74
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0037",
+      "kind": "pad",
+      "xy": [
+        287.44,
+        159.9
+      ],
+      "area": 72.0,
+      "circularity": 0.322,
+      "xy_tile": [
+        287.44,
+        159.9
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0038",
+      "kind": "hole",
+      "xy": [
+        224.19,
+        113.99
+      ],
+      "area": 71.0,
+      "circularity": 0.67,
+      "xy_tile": [
+        224.19,
+        113.99
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0039",
+      "kind": "pad",
+      "xy": [
+        201.27,
+        311.64
+      ],
+      "area": 68.5,
+      "circularity": 0.49,
+      "xy_tile": [
+        201.27,
+        311.64
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0040",
+      "kind": "pad",
+      "xy": [
+        354.93,
+        30.82
+      ],
+      "area": 68.5,
+      "circularity": 0.227,
+      "xy_tile": [
+        354.93,
+        30.82
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0041",
+      "kind": "hole",
+      "xy": [
+        49.29,
+        168.52
+      ],
+      "area": 68.0,
+      "circularity": 0.685,
+      "xy_tile": [
+        49.29,
+        168.52
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0042",
+      "kind": "pad",
+      "xy": [
+        271.05,
+        31.24
+      ],
+      "area": 68.0,
+      "circularity": 0.271,
+      "xy_tile": [
+        271.05,
+        31.24
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0043",
+      "kind": "pad",
+      "xy": [
+        358.49,
+        210.25
+      ],
+      "area": 66.5,
+      "circularity": 0.236,
+      "xy_tile": [
+        358.49,
+        210.25
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0044",
+      "kind": "hole",
+      "xy": [
+        455.96,
+        319.05
+      ],
+      "area": 66.0,
+      "circularity": 0.786,
+      "xy_tile": [
+        455.96,
+        319.05
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0045",
+      "kind": "pad",
+      "xy": [
+        69.13,
+        255.96
+      ],
+      "area": 66.0,
+      "circularity": 0.256,
+      "xy_tile": [
+        69.13,
+        255.96
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0046",
+      "kind": "pad",
+      "xy": [
+        338.41,
+        243.26
+      ],
+      "area": 66.0,
+      "circularity": 0.325,
+      "xy_tile": [
+        338.41,
+        243.26
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0047",
+      "kind": "pad",
+      "xy": [
+        109.68,
+        253.84
+      ],
+      "area": 65.5,
+      "circularity": 0.347,
+      "xy_tile": [
+        109.68,
+        253.84
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0048",
+      "kind": "hole",
+      "xy": [
+        95.04,
+        266.01
+      ],
+      "area": 64.5,
+      "circularity": 0.629,
+      "xy_tile": [
+        95.04,
+        266.01
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0049",
+      "kind": "pad",
+      "xy": [
+        238.95,
+        80.68
+      ],
+      "area": 64.0,
+      "circularity": 0.258,
+      "xy_tile": [
+        238.95,
+        80.68
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0050",
+      "kind": "pad",
+      "xy": [
+        272.05,
+        282.37
+      ],
+      "area": 63.5,
+      "circularity": 0.523,
+      "xy_tile": [
+        272.05,
+        282.37
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0051",
+      "kind": "pad",
+      "xy": [
+        352.67,
+        19.16
+      ],
+      "area": 62.5,
+      "circularity": 0.473,
+      "xy_tile": [
+        352.67,
+        19.16
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0052",
+      "kind": "pad",
+      "xy": [
+        69.6,
+        156.07
+      ],
+      "area": 61.5,
+      "circularity": 0.562,
+      "xy_tile": [
+        69.6,
+        156.07
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0053",
+      "kind": "pad",
+      "xy": [
+        431.25,
+        255.7
+      ],
+      "area": 61.0,
+      "circularity": 0.261,
+      "xy_tile": [
+        431.25,
+        255.7
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0054",
+      "kind": "pad",
+      "xy": [
+        84.08,
+        119.18
+      ],
+      "area": 60.0,
+      "circularity": 0.269,
+      "xy_tile": [
+        84.08,
+        119.18
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0055",
+      "kind": "pad",
+      "xy": [
+        312.83,
+        152.31
+      ],
+      "area": 59.5,
+      "circularity": 0.36,
+      "xy_tile": [
+        312.83,
+        152.31
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0056",
+      "kind": "pad",
+      "xy": [
+        413.08,
+        350.99
+      ],
+      "area": 59.0,
+      "circularity": 0.48,
+      "xy_tile": [
+        413.08,
+        350.99
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0057",
+      "kind": "pad",
+      "xy": [
+        341.58,
+        319.93
+      ],
+      "area": 59.0,
+      "circularity": 0.395,
+      "xy_tile": [
+        341.58,
+        319.93
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0058",
+      "kind": "pad",
+      "xy": [
+        419.28,
+        219.99
+      ],
+      "area": 59.0,
+      "circularity": 0.501,
+      "xy_tile": [
+        419.28,
+        219.99
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0059",
+      "kind": "pad",
+      "xy": [
+        301.46,
+        81.86
+      ],
+      "area": 58.5,
+      "circularity": 0.294,
+      "xy_tile": [
+        301.46,
+        81.86
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0060",
+      "kind": "pad",
+      "xy": [
+        102.98,
+        15.97
+      ],
+      "area": 57.5,
+      "circularity": 0.356,
+      "xy_tile": [
+        102.98,
+        15.97
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0061",
+      "kind": "pad",
+      "xy": [
+        282.7,
+        257.63
+      ],
+      "area": 57.0,
+      "circularity": 0.204,
+      "xy_tile": [
+        282.7,
+        257.63
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0062",
+      "kind": "pad",
+      "xy": [
+        219.44,
+        288.06
+      ],
+      "area": 56.5,
+      "circularity": 0.389,
+      "xy_tile": [
+        219.44,
+        288.06
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0063",
+      "kind": "pad",
+      "xy": [
+        113.8,
+        140.95
+      ],
+      "area": 56.5,
+      "circularity": 0.517,
+      "xy_tile": [
+        113.8,
+        140.95
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0064",
+      "kind": "pad",
+      "xy": [
+        273.45,
+        9.78
+      ],
+      "area": 56.5,
+      "circularity": 0.438,
+      "xy_tile": [
+        273.45,
+        9.78
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0065",
+      "kind": "pad",
+      "xy": [
+        296.54,
+        343.02
+      ],
+      "area": 55.0,
+      "circularity": 0.467,
+      "xy_tile": [
+        296.54,
+        343.02
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0066",
+      "kind": "pad",
+      "xy": [
+        107.09,
+        167.38
+      ],
+      "area": 55.0,
+      "circularity": 0.398,
+      "xy_tile": [
+        107.09,
+        167.38
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0067",
+      "kind": "pad",
+      "xy": [
+        96.72,
+        155.52
+      ],
+      "area": 55.0,
+      "circularity": 0.447,
+      "xy_tile": [
+        96.72,
+        155.52
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0068",
+      "kind": "pad",
+      "xy": [
+        96.05,
+        140.12
+      ],
+      "area": 55.0,
+      "circularity": 0.174,
+      "xy_tile": [
+        96.05,
+        140.12
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0069",
+      "kind": "hole",
+      "xy": [
+        191.82,
+        170.05
+      ],
+      "area": 54.0,
+      "circularity": 0.73,
+      "xy_tile": [
+        191.82,
+        170.05
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0070",
+      "kind": "pad",
+      "xy": [
+        456.26,
+        52.35
+      ],
+      "area": 53.0,
+      "circularity": 0.39,
+      "xy_tile": [
+        456.26,
+        52.35
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0071",
+      "kind": "pad",
+      "xy": [
+        329.27,
+        341.43
+      ],
+      "area": 52.5,
+      "circularity": 0.432,
+      "xy_tile": [
+        329.27,
+        341.43
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0072",
+      "kind": "pad",
+      "xy": [
+        147.59,
+        117.18
+      ],
+      "area": 52.5,
+      "circularity": 0.547,
+      "xy_tile": [
+        147.59,
+        117.18
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0073",
+      "kind": "pad",
+      "xy": [
+        44.19,
+        272.66
+      ],
+      "area": 52.0,
+      "circularity": 0.589,
+      "xy_tile": [
+        44.19,
+        272.66
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0074",
+      "kind": "pad",
+      "xy": [
+        246.25,
+        51.47
+      ],
+      "area": 52.0,
+      "circularity": 0.212,
+      "xy_tile": [
+        246.25,
+        51.47
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0075",
+      "kind": "pad",
+      "xy": [
+        442.83,
+        42.86
+      ],
+      "area": 51.5,
+      "circularity": 0.312,
+      "xy_tile": [
+        442.83,
+        42.86
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0076",
+      "kind": "pad",
+      "xy": [
+        183.64,
+        14.21
+      ],
+      "area": 51.5,
+      "circularity": 0.307,
+      "xy_tile": [
+        183.64,
+        14.21
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0077",
+      "kind": "pad",
+      "xy": [
+        49.06,
+        321.67
+      ],
+      "area": 51.0,
+      "circularity": 0.317,
+      "xy_tile": [
+        49.06,
+        321.67
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0078",
+      "kind": "pad",
+      "xy": [
+        176.97,
+        108.51
+      ],
+      "area": 51.0,
+      "circularity": 0.355,
+      "xy_tile": [
+        176.97,
+        108.51
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0079",
+      "kind": "pad",
+      "xy": [
+        408.87,
+        33.14
+      ],
+      "area": 51.0,
+      "circularity": 0.307,
+      "xy_tile": [
+        408.87,
+        33.14
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0080",
+      "kind": "pad",
+      "xy": [
+        110.53,
+        195.02
+      ],
+      "area": 50.5,
+      "circularity": 0.281,
+      "xy_tile": [
+        110.53,
+        195.02
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0081",
+      "kind": "pad",
+      "xy": [
+        214.93,
+        131.31
+      ],
+      "area": 50.5,
+      "circularity": 0.47,
+      "xy_tile": [
+        214.93,
+        131.31
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0082",
+      "kind": "pad",
+      "xy": [
+        300.29,
+        280.61
+      ],
+      "area": 50.0,
+      "circularity": 0.504,
+      "xy_tile": [
+        300.29,
+        280.61
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0083",
+      "kind": "pad",
+      "xy": [
+        325.99,
+        55.52
+      ],
+      "area": 50.0,
+      "circularity": 0.595,
+      "xy_tile": [
+        325.99,
+        55.52
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0084",
+      "kind": "pad",
+      "xy": [
+        286.03,
+        282.24
+      ],
+      "area": 49.5,
+      "circularity": 0.483,
+      "xy_tile": [
+        286.03,
+        282.24
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0085",
+      "kind": "pad",
+      "xy": [
+        353.87,
+        343.55
+      ],
+      "area": 48.5,
+      "circularity": 0.275,
+      "xy_tile": [
+        353.87,
+        343.55
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0086",
+      "kind": "pad",
+      "xy": [
+        50.26,
+        299.07
+      ],
+      "area": 48.5,
+      "circularity": 0.189,
+      "xy_tile": [
+        50.26,
+        299.07
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0087",
+      "kind": "pad",
+      "xy": [
+        102.65,
+        296.4
+      ],
+      "area": 47.5,
+      "circularity": 0.557,
+      "xy_tile": [
+        102.65,
+        296.4
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0088",
+      "kind": "pad",
+      "xy": [
+        145.12,
+        276.45
+      ],
+      "area": 47.5,
+      "circularity": 0.34,
+      "xy_tile": [
+        145.12,
+        276.45
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0089",
+      "kind": "hole",
+      "xy": [
+        464.99,
+        293.93
+      ],
+      "area": 47.0,
+      "circularity": 0.687,
+      "xy_tile": [
+        464.99,
+        293.93
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0090",
+      "kind": "pad",
+      "xy": [
+        114.92,
+        303.88
+      ],
+      "area": 46.0,
+      "circularity": 0.359,
+      "xy_tile": [
+        114.92,
+        303.88
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0091",
+      "kind": "pad",
+      "xy": [
+        209.75,
+        112.61
+      ],
+      "area": 45.5,
+      "circularity": 0.297,
+      "xy_tile": [
+        209.75,
+        112.61
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0092",
+      "kind": "pad",
+      "xy": [
+        180.8,
+        316.89
+      ],
+      "area": 44.0,
+      "circularity": 0.324,
+      "xy_tile": [
+        180.8,
+        316.89
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0093",
+      "kind": "pad",
+      "xy": [
+        131.09,
+        279.78
+      ],
+      "area": 44.0,
+      "circularity": 0.279,
+      "xy_tile": [
+        131.09,
+        279.78
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0094",
+      "kind": "pad",
+      "xy": [
+        306.66,
+        237.02
+      ],
+      "area": 43.5,
+      "circularity": 0.273,
+      "xy_tile": [
+        306.66,
+        237.02
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0095",
+      "kind": "pad",
+      "xy": [
+        457.81,
+        184.65
+      ],
+      "area": 43.5,
+      "circularity": 0.29,
+      "xy_tile": [
+        457.81,
+        184.65
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0096",
+      "kind": "pad",
+      "xy": [
+        181.4,
+        122.79
+      ],
+      "area": 43.0,
+      "circularity": 0.395,
+      "xy_tile": [
+        181.4,
+        122.79
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0097",
+      "kind": "pad",
+      "xy": [
+        408.52,
+        81.65
+      ],
+      "area": 43.0,
+      "circularity": 0.445,
+      "xy_tile": [
+        408.52,
+        81.65
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0098",
+      "kind": "pad",
+      "xy": [
+        347.81,
+        59.29
+      ],
+      "area": 43.0,
+      "circularity": 0.35,
+      "xy_tile": [
+        347.81,
+        59.29
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0099",
+      "kind": "pad",
+      "xy": [
+        221.51,
+        314.1
+      ],
+      "area": 42.5,
+      "circularity": 0.245,
+      "xy_tile": [
+        221.51,
+        314.1
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0100",
+      "kind": "pad",
+      "xy": [
+        332.49,
+        45.35
+      ],
+      "area": 42.5,
+      "circularity": 0.277,
+      "xy_tile": [
+        332.49,
+        45.35
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0101",
+      "kind": "pad",
+      "xy": [
+        423.41,
+        285.65
+      ],
+      "area": 41.5,
+      "circularity": 0.275,
+      "xy_tile": [
+        423.41,
+        285.65
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0102",
+      "kind": "pad",
+      "xy": [
+        335.8,
+        264.77
+      ],
+      "area": 41.0,
+      "circularity": 0.405,
+      "xy_tile": [
+        335.8,
+        264.77
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0103",
+      "kind": "hole",
+      "xy": [
+        235.42,
+        184.06
+      ],
+      "area": 41.0,
+      "circularity": 0.674,
+      "xy_tile": [
+        235.42,
+        184.06
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0104",
+      "kind": "pad",
+      "xy": [
+        201.46,
+        288.93
+      ],
+      "area": 40.5,
+      "circularity": 0.475,
+      "xy_tile": [
+        201.46,
+        288.93
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0105",
+      "kind": "pad",
+      "xy": [
+        200.18,
+        325.9
+      ],
+      "area": 40.0,
+      "circularity": 0.361,
+      "xy_tile": [
+        200.18,
+        325.9
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0106",
+      "kind": "pad",
+      "xy": [
+        316.23,
+        222.97
+      ],
+      "area": 39.0,
+      "circularity": 0.464,
+      "xy_tile": [
+        316.23,
+        222.97
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0107",
+      "kind": "pad",
+      "xy": [
+        312.94,
+        45.03
+      ],
+      "area": 39.0,
+      "circularity": 0.252,
+      "xy_tile": [
+        312.94,
+        45.03
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0108",
+      "kind": "pad",
+      "xy": [
+        228.38,
+        330.41
+      ],
+      "area": 38.0,
+      "circularity": 0.322,
+      "xy_tile": [
+        228.38,
+        330.41
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0109",
+      "kind": "pad",
+      "xy": [
+        450.45,
+        204.55
+      ],
+      "area": 38.0,
+      "circularity": 0.422,
+      "xy_tile": [
+        450.45,
+        204.55
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0110",
+      "kind": "hole",
+      "xy": [
+        170.55,
+        179.93
+      ],
+      "area": 37.0,
+      "circularity": 0.646,
+      "xy_tile": [
+        170.55,
+        179.93
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0111",
+      "kind": "pad",
+      "xy": [
+        106.31,
+        149.16
+      ],
+      "area": 37.0,
+      "circularity": 0.441,
+      "xy_tile": [
+        106.31,
+        149.16
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0112",
+      "kind": "pad",
+      "xy": [
+        435.77,
+        281.57
+      ],
+      "area": 36.5,
+      "circularity": 0.334,
+      "xy_tile": [
+        435.77,
+        281.57
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0113",
+      "kind": "hole",
+      "xy": [
+        347.94,
+        279.26
+      ],
+      "area": 36.5,
+      "circularity": 0.666,
+      "xy_tile": [
+        347.94,
+        279.26
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0114",
+      "kind": "pad",
+      "xy": [
+        453.59,
+        289.65
+      ],
+      "area": 36.0,
+      "circularity": 0.229,
+      "xy_tile": [
+        453.59,
+        289.65
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0115",
+      "kind": "pad",
+      "xy": [
+        125.01,
+        140.25
+      ],
+      "area": 36.0,
+      "circularity": 0.356,
+      "xy_tile": [
+        125.01,
+        140.25
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0116",
+      "kind": "hole",
+      "xy": [
+        143.13,
+        98.1
+      ],
+      "area": 36.0,
+      "circularity": 0.645,
+      "xy_tile": [
+        143.13,
+        98.1
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0117",
+      "kind": "pad",
+      "xy": [
+        232.92,
+        316.6
+      ],
+      "area": 35.5,
+      "circularity": 0.388,
+      "xy_tile": [
+        232.92,
+        316.6
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0118",
+      "kind": "pad",
+      "xy": [
+        234.45,
+        304.74
+      ],
+      "area": 35.5,
+      "circularity": 0.28,
+      "xy_tile": [
+        234.45,
+        304.74
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0119",
+      "kind": "pad",
+      "xy": [
+        371.81,
+        248.57
+      ],
+      "area": 35.5,
+      "circularity": 0.311,
+      "xy_tile": [
+        371.81,
+        248.57
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0120",
+      "kind": "pad",
+      "xy": [
+        379.81,
+        182.45
+      ],
+      "area": 35.0,
+      "circularity": 0.542,
+      "xy_tile": [
+        379.81,
+        182.45
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0121",
+      "kind": "pad",
+      "xy": [
+        144.08,
+        140.43
+      ],
+      "area": 35.0,
+      "circularity": 0.388,
+      "xy_tile": [
+        144.08,
+        140.43
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0122",
+      "kind": "pad",
+      "xy": [
+        269.37,
+        19.51
+      ],
+      "area": 34.0,
+      "circularity": 0.385,
+      "xy_tile": [
+        269.37,
+        19.51
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0123",
+      "kind": "hole",
+      "xy": [
+        361.82,
+        334.9
+      ],
+      "area": 33.5,
+      "circularity": 0.851,
+      "xy_tile": [
+        361.82,
+        334.9
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0124",
+      "kind": "hole",
+      "xy": [
+        362.27,
+        266.99
+      ],
+      "area": 33.5,
+      "circularity": 0.791,
+      "xy_tile": [
+        362.27,
+        266.99
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0125",
+      "kind": "pad",
+      "xy": [
+        396.05,
+        46.14
+      ],
+      "area": 33.5,
+      "circularity": 0.528,
+      "xy_tile": [
+        396.05,
+        46.14
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0126",
+      "kind": "hole",
+      "xy": [
+        435.68,
+        334.06
+      ],
+      "area": 33.0,
+      "circularity": 0.741,
+      "xy_tile": [
+        435.68,
+        334.06
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0127",
+      "kind": "pad",
+      "xy": [
+        312.87,
+        265.06
+      ],
+      "area": 32.5,
+      "circularity": 0.423,
+      "xy_tile": [
+        312.87,
+        265.06
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0128",
+      "kind": "hole",
+      "xy": [
+        465.55,
+        255.99
+      ],
+      "area": 32.5,
+      "circularity": 0.695,
+      "xy_tile": [
+        465.55,
+        255.99
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0129",
+      "kind": "pad",
+      "xy": [
+        281.75,
+        54.87
+      ],
+      "area": 32.5,
+      "circularity": 0.557,
+      "xy_tile": [
+        281.75,
+        54.87
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0130",
+      "kind": "pad",
+      "xy": [
+        441.31,
+        26.9
+      ],
+      "area": 32.5,
+      "circularity": 0.457,
+      "xy_tile": [
+        441.31,
+        26.9
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0131",
+      "kind": "pad",
+      "xy": [
+        321.8,
+        334.39
+      ],
+      "area": 32.0,
+      "circularity": 0.338,
+      "xy_tile": [
+        321.8,
+        334.39
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0132",
+      "kind": "pad",
+      "xy": [
+        376.13,
+        317.58
+      ],
+      "area": 32.0,
+      "circularity": 0.401,
+      "xy_tile": [
+        376.13,
+        317.58
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0133",
+      "kind": "pad",
+      "xy": [
+        456.46,
+        265.02
+      ],
+      "area": 32.0,
+      "circularity": 0.401,
+      "xy_tile": [
+        456.46,
+        265.02
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0134",
+      "kind": "pad",
+      "xy": [
+        145.75,
+        175.1
+      ],
+      "area": 32.0,
+      "circularity": 0.26,
+      "xy_tile": [
+        145.75,
+        175.1
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0135",
+      "kind": "hole",
+      "xy": [
+        139.72,
+        312.77
+      ],
+      "area": 31.5,
+      "circularity": 0.63,
+      "xy_tile": [
+        139.72,
+        312.77
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0136",
+      "kind": "pad",
+      "xy": [
+        346.24,
+        297.89
+      ],
+      "area": 31.5,
+      "circularity": 0.389,
+      "xy_tile": [
+        346.24,
+        297.89
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0137",
+      "kind": "pad",
+      "xy": [
+        349.68,
+        252.51
+      ],
+      "area": 31.0,
+      "circularity": 0.509,
+      "xy_tile": [
+        349.68,
+        252.51
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0138",
+      "kind": "pad",
+      "xy": [
+        454.14,
+        234.29
+      ],
+      "area": 31.0,
+      "circularity": 0.369,
+      "xy_tile": [
+        454.14,
+        234.29
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0139",
+      "kind": "pad",
+      "xy": [
+        404.55,
+        58.08
+      ],
+      "area": 31.0,
+      "circularity": 0.509,
+      "xy_tile": [
+        404.55,
+        58.08
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0140",
+      "kind": "hole",
+      "xy": [
+        376.72,
+        262.66
+      ],
+      "area": 30.5,
+      "circularity": 0.652,
+      "xy_tile": [
+        376.72,
+        262.66
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:hole-0141",
+      "kind": "hole",
+      "xy": [
+        357.09,
+        169.62
+      ],
+      "area": 30.5,
+      "circularity": 0.799,
+      "xy_tile": [
+        357.09,
+        169.62
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0142",
+      "kind": "pad",
+      "xy": [
+        409.48,
+        115.17
+      ],
+      "area": 30.5,
+      "circularity": 0.571,
+      "xy_tile": [
+        409.48,
+        115.17
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-000:pad-0143",
+      "kind": "pad",
+      "xy": [
+        423.2,
+        234.24
+      ],
+      "area": 30.0,
+      "circularity": 0.493,
+      "xy_tile": [
+        423.2,
+        234.24
+      ],
+      "tile_id": "cap-000"
+    },
+    {
+      "id": "cap-001:slot-0001",
+      "kind": "slot",
+      "xy": [
+        249.84,
+        126.28
+      ],
+      "area": 383.0,
+      "circularity": 0.103,
+      "xy_tile": [
+        169.91,
+        126.3
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0002",
+      "kind": "pad",
+      "xy": [
+        205.72,
+        66.99
+      ],
+      "area": 283.5,
+      "circularity": 0.105,
+      "xy_tile": [
+        125.82,
+        67.01
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0003",
+      "kind": "pad",
+      "xy": [
+        518.41,
+        25.75
+      ],
+      "area": 209.5,
+      "circularity": 0.228,
+      "xy_tile": [
+        438.45,
+        25.89
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0004",
+      "kind": "pad",
+      "xy": [
+        370.35,
+        72.97
+      ],
+      "area": 199.0,
+      "circularity": 0.156,
+      "xy_tile": [
+        290.41,
+        73.05
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0005",
+      "kind": "pad",
+      "xy": [
+        485.57,
+        305.96
+      ],
+      "area": 154.0,
+      "circularity": 0.379,
+      "xy_tile": [
+        405.52,
+        306.02
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0006",
+      "kind": "pad",
+      "xy": [
+        485.34,
+        261.84
+      ],
+      "area": 140.5,
+      "circularity": 0.296,
+      "xy_tile": [
+        405.31,
+        261.91
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0007",
+      "kind": "pad",
+      "xy": [
+        487.01,
+        215.04
+      ],
+      "area": 128.5,
+      "circularity": 0.153,
+      "xy_tile": [
+        407.0,
+        215.12
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0008",
+      "kind": "pad",
+      "xy": [
+        299.64,
+        252.77
+      ],
+      "area": 121.5,
+      "circularity": 0.206,
+      "xy_tile": [
+        219.66,
+        252.78
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0009",
+      "kind": "pad",
+      "xy": [
+        107.51,
+        275.68
+      ],
+      "area": 117.5,
+      "circularity": 0.184,
+      "xy_tile": [
+        27.56,
+        275.62
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0010",
+      "kind": "pad",
+      "xy": [
+        211.18,
+        151.85
+      ],
+      "area": 112.5,
+      "circularity": 0.415,
+      "xy_tile": [
+        131.25,
+        151.85
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0011",
+      "kind": "pad",
+      "xy": [
+        423.39,
+        194.93
+      ],
+      "area": 110.0,
+      "circularity": 0.298,
+      "xy_tile": [
+        343.4,
+        195.0
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0012",
+      "kind": "pad",
+      "xy": [
+        428.52,
+        325.58
+      ],
+      "area": 108.5,
+      "circularity": 0.177,
+      "xy_tile": [
+        348.48,
+        325.62
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0013",
+      "kind": "pad",
+      "xy": [
+        508.47,
+        197.59
+      ],
+      "area": 105.5,
+      "circularity": 0.222,
+      "xy_tile": [
+        428.46,
+        197.69
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0014",
+      "kind": "pad",
+      "xy": [
+        355.78,
+        33.85
+      ],
+      "area": 102.5,
+      "circularity": 0.191,
+      "xy_tile": [
+        275.86,
+        33.93
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0015",
+      "kind": "pad",
+      "xy": [
+        482.47,
+        337.99
+      ],
+      "area": 100.5,
+      "circularity": 0.475,
+      "xy_tile": [
+        402.41,
+        338.04
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0016",
+      "kind": "pad",
+      "xy": [
+        176.06,
+        149.74
+      ],
+      "area": 97.5,
+      "circularity": 0.208,
+      "xy_tile": [
+        96.14,
+        149.73
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0017",
+      "kind": "pad",
+      "xy": [
+        154.83,
+        307.47
+      ],
+      "area": 97.0,
+      "circularity": 0.469,
+      "xy_tile": [
+        74.86,
+        307.42
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0018",
+      "kind": "pad",
+      "xy": [
+        430.22,
+        75.3
+      ],
+      "area": 96.0,
+      "circularity": 0.188,
+      "xy_tile": [
+        350.27,
+        75.4
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0019",
+      "kind": "pad",
+      "xy": [
+        316.01,
+        14.94
+      ],
+      "area": 95.0,
+      "circularity": 0.357,
+      "xy_tile": [
+        236.11,
+        15.01
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0020",
+      "kind": "pad",
+      "xy": [
+        502.1,
+        246.74
+      ],
+      "area": 89.0,
+      "circularity": 0.574,
+      "xy_tile": [
+        422.07,
+        246.82
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0021",
+      "kind": "pad",
+      "xy": [
+        136.09,
+        26.6
+      ],
+      "area": 88.5,
+      "circularity": 0.565,
+      "xy_tile": [
+        56.23,
+        26.61
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0022",
+      "kind": "hole",
+      "xy": [
+        509.77,
+        338.22
+      ],
+      "area": 88.0,
+      "circularity": 0.904,
+      "xy_tile": [
+        429.71,
+        338.28
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0023",
+      "kind": "pad",
+      "xy": [
+        357.33,
+        339.95
+      ],
+      "area": 87.5,
+      "circularity": 0.227,
+      "xy_tile": [
+        277.3,
+        339.96
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0024",
+      "kind": "pad",
+      "xy": [
+        428.32,
+        270.87
+      ],
+      "area": 83.5,
+      "circularity": 0.164,
+      "xy_tile": [
+        348.3,
+        270.92
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0025",
+      "kind": "pad",
+      "xy": [
+        526.57,
+        299.31
+      ],
+      "area": 83.0,
+      "circularity": 0.296,
+      "xy_tile": [
+        446.52,
+        299.39
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0026",
+      "kind": "pad",
+      "xy": [
+        496.98,
+        279.7
+      ],
+      "area": 83.0,
+      "circularity": 0.285,
+      "xy_tile": [
+        416.94,
+        279.77
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0027",
+      "kind": "pad",
+      "xy": [
+        432.39,
+        241.94
+      ],
+      "area": 82.5,
+      "circularity": 0.317,
+      "xy_tile": [
+        352.38,
+        242.0
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0028",
+      "kind": "pad",
+      "xy": [
+        93.25,
+        318.32
+      ],
+      "area": 81.5,
+      "circularity": 0.39,
+      "xy_tile": [
+        13.29,
+        318.24
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0029",
+      "kind": "pad",
+      "xy": [
+        257.49,
+        284.28
+      ],
+      "area": 80.5,
+      "circularity": 0.267,
+      "xy_tile": [
+        177.51,
+        284.27
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0030",
+      "kind": "pad",
+      "xy": [
+        446.42,
+        11.7
+      ],
+      "area": 78.5,
+      "circularity": 0.301,
+      "xy_tile": [
+        366.49,
+        11.82
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0031",
+      "kind": "pad",
+      "xy": [
+        510.55,
+        313.84
+      ],
+      "area": 78.0,
+      "circularity": 0.209,
+      "xy_tile": [
+        430.5,
+        313.91
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0032",
+      "kind": "pad",
+      "xy": [
+        426.76,
+        298.86
+      ],
+      "area": 78.0,
+      "circularity": 0.226,
+      "xy_tile": [
+        346.73,
+        298.9
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0033",
+      "kind": "pad",
+      "xy": [
+        314.35,
+        283.42
+      ],
+      "area": 78.0,
+      "circularity": 0.221,
+      "xy_tile": [
+        234.35,
+        283.43
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0034",
+      "kind": "pad",
+      "xy": [
+        428.07,
+        312.43
+      ],
+      "area": 77.5,
+      "circularity": 0.172,
+      "xy_tile": [
+        348.04,
+        312.47
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0035",
+      "kind": "pad",
+      "xy": [
+        183.48,
+        76.82
+      ],
+      "area": 77.0,
+      "circularity": 0.295,
+      "xy_tile": [
+        103.59,
+        76.83
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0036",
+      "kind": "hole",
+      "xy": [
+        268.58,
+        45.87
+      ],
+      "area": 77.0,
+      "circularity": 0.665,
+      "xy_tile": [
+        188.68,
+        45.92
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0037",
+      "kind": "pad",
+      "xy": [
+        523.26,
+        184.74
+      ],
+      "area": 74.5,
+      "circularity": 0.389,
+      "xy_tile": [
+        443.25,
+        184.84
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0038",
+      "kind": "pad",
+      "xy": [
+        140.74,
+        187.69
+      ],
+      "area": 74.0,
+      "circularity": 0.453,
+      "xy_tile": [
+        60.82,
+        187.66
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0039",
+      "kind": "pad",
+      "xy": [
+        346.81,
+        201.3
+      ],
+      "area": 73.5,
+      "circularity": 0.143,
+      "xy_tile": [
+        266.83,
+        201.34
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0040",
+      "kind": "hole",
+      "xy": [
+        205.92,
+        22.64
+      ],
+      "area": 73.5,
+      "circularity": 0.685,
+      "xy_tile": [
+        126.04,
+        22.67
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0041",
+      "kind": "pad",
+      "xy": [
+        266.62,
+        340.16
+      ],
+      "area": 73.0,
+      "circularity": 0.327,
+      "xy_tile": [
+        186.61,
+        340.14
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0042",
+      "kind": "hole",
+      "xy": [
+        224.13,
+        114.08
+      ],
+      "area": 73.0,
+      "circularity": 0.771,
+      "xy_tile": [
+        144.21,
+        114.1
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0043",
+      "kind": "pad",
+      "xy": [
+        252.88,
+        340.77
+      ],
+      "area": 72.5,
+      "circularity": 0.318,
+      "xy_tile": [
+        172.88,
+        340.74
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0044",
+      "kind": "pad",
+      "xy": [
+        486.35,
+        29.72
+      ],
+      "area": 72.5,
+      "circularity": 0.275,
+      "xy_tile": [
+        406.4,
+        29.85
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0045",
+      "kind": "pad",
+      "xy": [
+        287.46,
+        159.88
+      ],
+      "area": 72.0,
+      "circularity": 0.322,
+      "xy_tile": [
+        207.51,
+        159.91
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0046",
+      "kind": "pad",
+      "xy": [
+        280.95,
+        340.81
+      ],
+      "area": 71.5,
+      "circularity": 0.313,
+      "xy_tile": [
+        200.94,
+        340.79
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0047",
+      "kind": "pad",
+      "xy": [
+        338.37,
+        242.58
+      ],
+      "area": 70.0,
+      "circularity": 0.296,
+      "xy_tile": [
+        258.38,
+        242.61
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0048",
+      "kind": "pad",
+      "xy": [
+        201.25,
+        311.68
+      ],
+      "area": 68.5,
+      "circularity": 0.49,
+      "xy_tile": [
+        121.27,
+        311.64
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0049",
+      "kind": "pad",
+      "xy": [
+        109.57,
+        253.91
+      ],
+      "area": 67.5,
+      "circularity": 0.388,
+      "xy_tile": [
+        29.63,
+        253.85
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0050",
+      "kind": "hole",
+      "xy": [
+        484.57,
+        15.44
+      ],
+      "area": 67.0,
+      "circularity": 0.632,
+      "xy_tile": [
+        404.63,
+        15.57
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0051",
+      "kind": "pad",
+      "xy": [
+        358.47,
+        210.21
+      ],
+      "area": 66.5,
+      "circularity": 0.236,
+      "xy_tile": [
+        278.49,
+        210.25
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0052",
+      "kind": "pad",
+      "xy": [
+        543.78,
+        164.85
+      ],
+      "area": 66.5,
+      "circularity": 0.215,
+      "xy_tile": [
+        463.77,
+        164.97
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0053",
+      "kind": "hole",
+      "xy": [
+        456.0,
+        319.0
+      ],
+      "area": 66.0,
+      "circularity": 0.786,
+      "xy_tile": [
+        375.96,
+        319.05
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0054",
+      "kind": "pad",
+      "xy": [
+        504.16,
+        58.1
+      ],
+      "area": 66.0,
+      "circularity": 0.537,
+      "xy_tile": [
+        424.2,
+        58.23
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0055",
+      "kind": "hole",
+      "xy": [
+        94.92,
+        266.1
+      ],
+      "area": 65.5,
+      "circularity": 0.639,
+      "xy_tile": [
+        14.98,
+        266.04
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0056",
+      "kind": "pad",
+      "xy": [
+        238.86,
+        80.65
+      ],
+      "area": 64.0,
+      "circularity": 0.258,
+      "xy_tile": [
+        158.95,
+        80.68
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0057",
+      "kind": "pad",
+      "xy": [
+        272.04,
+        282.38
+      ],
+      "area": 63.5,
+      "circularity": 0.523,
+      "xy_tile": [
+        192.05,
+        282.37
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0058",
+      "kind": "pad",
+      "xy": [
+        352.58,
+        19.08
+      ],
+      "area": 62.5,
+      "circularity": 0.473,
+      "xy_tile": [
+        272.67,
+        19.16
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0059",
+      "kind": "pad",
+      "xy": [
+        431.27,
+        255.64
+      ],
+      "area": 61.0,
+      "circularity": 0.261,
+      "xy_tile": [
+        351.25,
+        255.7
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0060",
+      "kind": "pad",
+      "xy": [
+        546.83,
+        326.37
+      ],
+      "area": 59.5,
+      "circularity": 0.426,
+      "xy_tile": [
+        466.76,
+        326.45
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0061",
+      "kind": "pad",
+      "xy": [
+        312.78,
+        152.27
+      ],
+      "area": 59.5,
+      "circularity": 0.36,
+      "xy_tile": [
+        232.83,
+        152.31
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0062",
+      "kind": "pad",
+      "xy": [
+        413.12,
+        350.96
+      ],
+      "area": 59.0,
+      "circularity": 0.48,
+      "xy_tile": [
+        333.08,
+        350.99
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0063",
+      "kind": "pad",
+      "xy": [
+        341.6,
+        319.92
+      ],
+      "area": 59.0,
+      "circularity": 0.395,
+      "xy_tile": [
+        261.58,
+        319.93
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0064",
+      "kind": "pad",
+      "xy": [
+        419.28,
+        219.93
+      ],
+      "area": 59.0,
+      "circularity": 0.501,
+      "xy_tile": [
+        339.28,
+        219.99
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0065",
+      "kind": "pad",
+      "xy": [
+        282.68,
+        257.71
+      ],
+      "area": 58.0,
+      "circularity": 0.207,
+      "xy_tile": [
+        202.7,
+        257.71
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0066",
+      "kind": "pad",
+      "xy": [
+        541.26,
+        82.5
+      ],
+      "area": 58.0,
+      "circularity": 0.275,
+      "xy_tile": [
+        461.28,
+        82.64
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0067",
+      "kind": "pad",
+      "xy": [
+        535.89,
+        225.73
+      ],
+      "area": 57.5,
+      "circularity": 0.375,
+      "xy_tile": [
+        455.86,
+        225.83
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0068",
+      "kind": "pad",
+      "xy": [
+        301.44,
+        81.82
+      ],
+      "area": 57.5,
+      "circularity": 0.289,
+      "xy_tile": [
+        221.52,
+        81.87
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0069",
+      "kind": "pad",
+      "xy": [
+        102.83,
+        15.97
+      ],
+      "area": 57.5,
+      "circularity": 0.356,
+      "xy_tile": [
+        22.98,
+        15.97
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0070",
+      "kind": "pad",
+      "xy": [
+        537.2,
+        127.04
+      ],
+      "area": 57.0,
+      "circularity": 0.349,
+      "xy_tile": [
+        457.2,
+        127.16
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0071",
+      "kind": "pad",
+      "xy": [
+        219.42,
+        288.09
+      ],
+      "area": 56.5,
+      "circularity": 0.389,
+      "xy_tile": [
+        139.44,
+        288.06
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0072",
+      "kind": "pad",
+      "xy": [
+        113.7,
+        140.98
+      ],
+      "area": 56.5,
+      "circularity": 0.517,
+      "xy_tile": [
+        33.8,
+        140.95
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0073",
+      "kind": "pad",
+      "xy": [
+        273.34,
+        9.72
+      ],
+      "area": 56.5,
+      "circularity": 0.438,
+      "xy_tile": [
+        193.45,
+        9.78
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0074",
+      "kind": "pad",
+      "xy": [
+        96.67,
+        155.55
+      ],
+      "area": 56.0,
+      "circularity": 0.429,
+      "xy_tile": [
+        16.77,
+        155.51
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0075",
+      "kind": "pad",
+      "xy": [
+        296.55,
+        343.03
+      ],
+      "area": 55.0,
+      "circularity": 0.467,
+      "xy_tile": [
+        216.54,
+        343.02
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0076",
+      "kind": "pad",
+      "xy": [
+        107.0,
+        167.42
+      ],
+      "area": 55.0,
+      "circularity": 0.398,
+      "xy_tile": [
+        27.09,
+        167.38
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0077",
+      "kind": "pad",
+      "xy": [
+        95.95,
+        140.15
+      ],
+      "area": 55.0,
+      "circularity": 0.174,
+      "xy_tile": [
+        16.05,
+        140.12
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0078",
+      "kind": "hole",
+      "xy": [
+        191.75,
+        170.06
+      ],
+      "area": 54.0,
+      "circularity": 0.73,
+      "xy_tile": [
+        111.82,
+        170.05
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0079",
+      "kind": "pad",
+      "xy": [
+        110.58,
+        195.32
+      ],
+      "area": 53.0,
+      "circularity": 0.287,
+      "xy_tile": [
+        30.66,
+        195.28
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0080",
+      "kind": "pad",
+      "xy": [
+        456.21,
+        52.24
+      ],
+      "area": 53.0,
+      "circularity": 0.39,
+      "xy_tile": [
+        376.26,
+        52.35
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0081",
+      "kind": "pad",
+      "xy": [
+        329.29,
+        341.43
+      ],
+      "area": 52.5,
+      "circularity": 0.432,
+      "xy_tile": [
+        249.27,
+        341.43
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0082",
+      "kind": "pad",
+      "xy": [
+        147.49,
+        117.19
+      ],
+      "area": 52.5,
+      "circularity": 0.547,
+      "xy_tile": [
+        67.59,
+        117.18
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0083",
+      "kind": "pad",
+      "xy": [
+        271.04,
+        32.44
+      ],
+      "area": 52.5,
+      "circularity": 0.414,
+      "xy_tile": [
+        191.14,
+        32.49
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0084",
+      "kind": "pad",
+      "xy": [
+        176.87,
+        108.51
+      ],
+      "area": 51.0,
+      "circularity": 0.355,
+      "xy_tile": [
+        96.97,
+        108.51
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0085",
+      "kind": "pad",
+      "xy": [
+        408.8,
+        33.04
+      ],
+      "area": 51.0,
+      "circularity": 0.307,
+      "xy_tile": [
+        328.87,
+        33.14
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0086",
+      "kind": "pad",
+      "xy": [
+        214.85,
+        131.3
+      ],
+      "area": 50.5,
+      "circularity": 0.47,
+      "xy_tile": [
+        134.93,
+        131.31
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0087",
+      "kind": "pad",
+      "xy": [
+        300.28,
+        280.61
+      ],
+      "area": 50.0,
+      "circularity": 0.504,
+      "xy_tile": [
+        220.29,
+        280.61
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0088",
+      "kind": "pad",
+      "xy": [
+        508.67,
+        114.71
+      ],
+      "area": 50.0,
+      "circularity": 0.578,
+      "xy_tile": [
+        428.69,
+        114.83
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0089",
+      "kind": "pad",
+      "xy": [
+        325.91,
+        55.45
+      ],
+      "area": 50.0,
+      "circularity": 0.595,
+      "xy_tile": [
+        245.99,
+        55.52
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0090",
+      "kind": "pad",
+      "xy": [
+        286.02,
+        282.24
+      ],
+      "area": 49.5,
+      "circularity": 0.483,
+      "xy_tile": [
+        206.03,
+        282.24
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0091",
+      "kind": "pad",
+      "xy": [
+        442.52,
+        42.82
+      ],
+      "area": 49.5,
+      "circularity": 0.3,
+      "xy_tile": [
+        362.58,
+        42.93
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0092",
+      "kind": "pad",
+      "xy": [
+        102.6,
+        296.47
+      ],
+      "area": 47.5,
+      "circularity": 0.557,
+      "xy_tile": [
+        22.65,
+        296.4
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0093",
+      "kind": "pad",
+      "xy": [
+        506.53,
+        286.01
+      ],
+      "area": 47.5,
+      "circularity": 0.426,
+      "xy_tile": [
+        426.49,
+        286.08
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0094",
+      "kind": "pad",
+      "xy": [
+        145.07,
+        276.5
+      ],
+      "area": 47.5,
+      "circularity": 0.34,
+      "xy_tile": [
+        65.12,
+        276.45
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0095",
+      "kind": "pad",
+      "xy": [
+        347.44,
+        59.19
+      ],
+      "area": 46.5,
+      "circularity": 0.352,
+      "xy_tile": [
+        267.51,
+        59.26
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0096",
+      "kind": "pad",
+      "xy": [
+        114.88,
+        303.95
+      ],
+      "area": 46.0,
+      "circularity": 0.359,
+      "xy_tile": [
+        34.92,
+        303.88
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0097",
+      "kind": "pad",
+      "xy": [
+        209.66,
+        112.6
+      ],
+      "area": 45.5,
+      "circularity": 0.297,
+      "xy_tile": [
+        129.75,
+        112.61
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0098",
+      "kind": "pad",
+      "xy": [
+        554.29,
+        297.71
+      ],
+      "area": 45.0,
+      "circularity": 0.308,
+      "xy_tile": [
+        474.23,
+        297.8
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0099",
+      "kind": "pad",
+      "xy": [
+        180.78,
+        316.94
+      ],
+      "area": 44.0,
+      "circularity": 0.324,
+      "xy_tile": [
+        100.8,
+        316.89
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0100",
+      "kind": "hole",
+      "xy": [
+        464.72,
+        293.94
+      ],
+      "area": 44.0,
+      "circularity": 0.681,
+      "xy_tile": [
+        384.68,
+        294.0
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0101",
+      "kind": "pad",
+      "xy": [
+        457.81,
+        184.57
+      ],
+      "area": 43.5,
+      "circularity": 0.29,
+      "xy_tile": [
+        377.81,
+        184.65
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0102",
+      "kind": "pad",
+      "xy": [
+        181.31,
+        122.79
+      ],
+      "area": 43.0,
+      "circularity": 0.395,
+      "xy_tile": [
+        101.4,
+        122.79
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0103",
+      "kind": "pad",
+      "xy": [
+        408.47,
+        81.56
+      ],
+      "area": 43.0,
+      "circularity": 0.445,
+      "xy_tile": [
+        328.52,
+        81.65
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0104",
+      "kind": "pad",
+      "xy": [
+        221.5,
+        314.13
+      ],
+      "area": 42.5,
+      "circularity": 0.245,
+      "xy_tile": [
+        141.51,
+        314.1
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0105",
+      "kind": "pad",
+      "xy": [
+        332.41,
+        45.28
+      ],
+      "area": 42.5,
+      "circularity": 0.277,
+      "xy_tile": [
+        252.49,
+        45.35
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0106",
+      "kind": "pad",
+      "xy": [
+        130.95,
+        279.57
+      ],
+      "area": 42.0,
+      "circularity": 0.292,
+      "xy_tile": [
+        51.0,
+        279.51
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0107",
+      "kind": "pad",
+      "xy": [
+        306.73,
+        237.0
+      ],
+      "area": 42.0,
+      "circularity": 0.248,
+      "xy_tile": [
+        226.75,
+        237.02
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0108",
+      "kind": "pad",
+      "xy": [
+        485.21,
+        182.84
+      ],
+      "area": 42.0,
+      "circularity": 0.317,
+      "xy_tile": [
+        405.21,
+        182.93
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0109",
+      "kind": "pad",
+      "xy": [
+        501.98,
+        349.55
+      ],
+      "area": 41.5,
+      "circularity": 0.309,
+      "xy_tile": [
+        421.92,
+        349.61
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0110",
+      "kind": "pad",
+      "xy": [
+        423.43,
+        285.6
+      ],
+      "area": 41.5,
+      "circularity": 0.275,
+      "xy_tile": [
+        343.41,
+        285.65
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0111",
+      "kind": "pad",
+      "xy": [
+        335.8,
+        264.75
+      ],
+      "area": 41.0,
+      "circularity": 0.405,
+      "xy_tile": [
+        255.8,
+        264.77
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0112",
+      "kind": "pad",
+      "xy": [
+        520.9,
+        222.73
+      ],
+      "area": 41.0,
+      "circularity": 0.174,
+      "xy_tile": [
+        440.88,
+        222.82
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0113",
+      "kind": "hole",
+      "xy": [
+        235.36,
+        184.06
+      ],
+      "area": 41.0,
+      "circularity": 0.674,
+      "xy_tile": [
+        155.42,
+        184.06
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0114",
+      "kind": "pad",
+      "xy": [
+        201.43,
+        288.96
+      ],
+      "area": 40.5,
+      "circularity": 0.475,
+      "xy_tile": [
+        121.46,
+        288.93
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0115",
+      "kind": "pad",
+      "xy": [
+        482.71,
+        158.66
+      ],
+      "area": 40.5,
+      "circularity": 0.5,
+      "xy_tile": [
+        402.72,
+        158.76
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0116",
+      "kind": "pad",
+      "xy": [
+        200.15,
+        325.94
+      ],
+      "area": 40.0,
+      "circularity": 0.361,
+      "xy_tile": [
+        120.17,
+        325.9
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0117",
+      "kind": "pad",
+      "xy": [
+        545.74,
+        57.35
+      ],
+      "area": 40.0,
+      "circularity": 0.403,
+      "xy_tile": [
+        465.77,
+        57.49
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0118",
+      "kind": "hole",
+      "xy": [
+        513.46,
+        281.25
+      ],
+      "area": 39.0,
+      "circularity": 0.641,
+      "xy_tile": [
+        433.42,
+        281.33
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0119",
+      "kind": "pad",
+      "xy": [
+        316.21,
+        222.95
+      ],
+      "area": 39.0,
+      "circularity": 0.464,
+      "xy_tile": [
+        236.23,
+        222.97
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0120",
+      "kind": "pad",
+      "xy": [
+        312.85,
+        44.97
+      ],
+      "area": 39.0,
+      "circularity": 0.252,
+      "xy_tile": [
+        232.94,
+        45.03
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0121",
+      "kind": "hole",
+      "xy": [
+        529.56,
+        268.91
+      ],
+      "area": 38.5,
+      "circularity": 0.66,
+      "xy_tile": [
+        449.52,
+        269.0
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0122",
+      "kind": "pad",
+      "xy": [
+        442.22,
+        26.36
+      ],
+      "area": 38.5,
+      "circularity": 0.359,
+      "xy_tile": [
+        362.28,
+        26.47
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0123",
+      "kind": "pad",
+      "xy": [
+        228.37,
+        330.44
+      ],
+      "area": 38.0,
+      "circularity": 0.322,
+      "xy_tile": [
+        148.38,
+        330.41
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0124",
+      "kind": "pad",
+      "xy": [
+        450.45,
+        204.48
+      ],
+      "area": 38.0,
+      "circularity": 0.422,
+      "xy_tile": [
+        370.45,
+        204.55
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0125",
+      "kind": "pad",
+      "xy": [
+        477.82,
+        238.22
+      ],
+      "area": 37.5,
+      "circularity": 0.383,
+      "xy_tile": [
+        397.8,
+        238.3
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0126",
+      "kind": "pad",
+      "xy": [
+        502.11,
+        170.81
+      ],
+      "area": 37.5,
+      "circularity": 0.431,
+      "xy_tile": [
+        422.11,
+        170.91
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0127",
+      "kind": "pad",
+      "xy": [
+        247.47,
+        229.77
+      ],
+      "area": 37.0,
+      "circularity": 0.328,
+      "xy_tile": [
+        167.51,
+        229.77
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0128",
+      "kind": "hole",
+      "xy": [
+        170.48,
+        179.95
+      ],
+      "area": 37.0,
+      "circularity": 0.646,
+      "xy_tile": [
+        90.55,
+        179.93
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0129",
+      "kind": "pad",
+      "xy": [
+        106.21,
+        149.19
+      ],
+      "area": 37.0,
+      "circularity": 0.441,
+      "xy_tile": [
+        26.31,
+        149.16
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0130",
+      "kind": "pad",
+      "xy": [
+        232.86,
+        316.68
+      ],
+      "area": 36.5,
+      "circularity": 0.399,
+      "xy_tile": [
+        152.87,
+        316.65
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0131",
+      "kind": "pad",
+      "xy": [
+        435.8,
+        281.52
+      ],
+      "area": 36.5,
+      "circularity": 0.334,
+      "xy_tile": [
+        355.77,
+        281.57
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0132",
+      "kind": "hole",
+      "xy": [
+        347.94,
+        279.24
+      ],
+      "area": 36.5,
+      "circularity": 0.666,
+      "xy_tile": [
+        267.94,
+        279.26
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0133",
+      "kind": "pad",
+      "xy": [
+        476.58,
+        293.53
+      ],
+      "area": 36.0,
+      "circularity": 0.325,
+      "xy_tile": [
+        396.54,
+        293.59
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0134",
+      "kind": "pad",
+      "xy": [
+        124.91,
+        140.27
+      ],
+      "area": 36.0,
+      "circularity": 0.356,
+      "xy_tile": [
+        45.01,
+        140.25
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0135",
+      "kind": "pad",
+      "xy": [
+        143.94,
+        140.46
+      ],
+      "area": 36.0,
+      "circularity": 0.399,
+      "xy_tile": [
+        64.03,
+        140.44
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0136",
+      "kind": "hole",
+      "xy": [
+        143.02,
+        98.11
+      ],
+      "area": 36.0,
+      "circularity": 0.645,
+      "xy_tile": [
+        63.13,
+        98.1
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0137",
+      "kind": "pad",
+      "xy": [
+        234.44,
+        304.77
+      ],
+      "area": 35.5,
+      "circularity": 0.28,
+      "xy_tile": [
+        154.45,
+        304.74
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0138",
+      "kind": "pad",
+      "xy": [
+        371.81,
+        248.53
+      ],
+      "area": 35.5,
+      "circularity": 0.311,
+      "xy_tile": [
+        291.81,
+        248.57
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0139",
+      "kind": "pad",
+      "xy": [
+        350.16,
+        252.53
+      ],
+      "area": 35.0,
+      "circularity": 0.297,
+      "xy_tile": [
+        270.17,
+        252.56
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0140",
+      "kind": "pad",
+      "xy": [
+        379.79,
+        182.4
+      ],
+      "area": 35.0,
+      "circularity": 0.542,
+      "xy_tile": [
+        299.81,
+        182.45
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0141",
+      "kind": "hole",
+      "xy": [
+        524.96,
+        240.25
+      ],
+      "area": 34.5,
+      "circularity": 0.671,
+      "xy_tile": [
+        444.93,
+        240.34
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0142",
+      "kind": "pad",
+      "xy": [
+        454.01,
+        234.31
+      ],
+      "area": 34.5,
+      "circularity": 0.396,
+      "xy_tile": [
+        374.0,
+        234.38
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0143",
+      "kind": "pad",
+      "xy": [
+        453.41,
+        291.01
+      ],
+      "area": 34.0,
+      "circularity": 0.237,
+      "xy_tile": [
+        373.38,
+        291.06
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0144",
+      "kind": "pad",
+      "xy": [
+        269.26,
+        19.46
+      ],
+      "area": 34.0,
+      "circularity": 0.385,
+      "xy_tile": [
+        189.37,
+        19.51
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0145",
+      "kind": "hole",
+      "xy": [
+        362.27,
+        266.96
+      ],
+      "area": 33.5,
+      "circularity": 0.791,
+      "xy_tile": [
+        282.27,
+        266.99
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0146",
+      "kind": "pad",
+      "xy": [
+        395.98,
+        46.05
+      ],
+      "area": 33.5,
+      "circularity": 0.528,
+      "xy_tile": [
+        316.05,
+        46.14
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0147",
+      "kind": "hole",
+      "xy": [
+        435.72,
+        334.02
+      ],
+      "area": 33.0,
+      "circularity": 0.741,
+      "xy_tile": [
+        355.68,
+        334.06
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0148",
+      "kind": "pad",
+      "xy": [
+        538.12,
+        262.67
+      ],
+      "area": 33.0,
+      "circularity": 0.471,
+      "xy_tile": [
+        458.08,
+        262.76
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0149",
+      "kind": "pad",
+      "xy": [
+        550.09,
+        149.35
+      ],
+      "area": 33.0,
+      "circularity": 0.511,
+      "xy_tile": [
+        470.08,
+        149.47
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0150",
+      "kind": "pad",
+      "xy": [
+        404.64,
+        58.26
+      ],
+      "area": 33.0,
+      "circularity": 0.471,
+      "xy_tile": [
+        324.7,
+        58.35
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0151",
+      "kind": "pad",
+      "xy": [
+        312.86,
+        265.05
+      ],
+      "area": 32.5,
+      "circularity": 0.423,
+      "xy_tile": [
+        232.87,
+        265.06
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0152",
+      "kind": "pad",
+      "xy": [
+        281.66,
+        54.82
+      ],
+      "area": 32.5,
+      "circularity": 0.557,
+      "xy_tile": [
+        201.75,
+        54.87
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0153",
+      "kind": "pad",
+      "xy": [
+        376.15,
+        317.56
+      ],
+      "area": 32.0,
+      "circularity": 0.401,
+      "xy_tile": [
+        296.13,
+        317.58
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0154",
+      "kind": "pad",
+      "xy": [
+        456.48,
+        264.96
+      ],
+      "area": 32.0,
+      "circularity": 0.401,
+      "xy_tile": [
+        376.46,
+        265.02
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0155",
+      "kind": "pad",
+      "xy": [
+        145.67,
+        175.13
+      ],
+      "area": 32.0,
+      "circularity": 0.26,
+      "xy_tile": [
+        65.75,
+        175.1
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0156",
+      "kind": "pad",
+      "xy": [
+        355.93,
+        158.95
+      ],
+      "area": 32.0,
+      "circularity": 0.526,
+      "xy_tile": [
+        275.97,
+        159.0
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0157",
+      "kind": "hole",
+      "xy": [
+        139.69,
+        312.83
+      ],
+      "area": 31.5,
+      "circularity": 0.63,
+      "xy_tile": [
+        59.72,
+        312.77
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0158",
+      "kind": "pad",
+      "xy": [
+        346.25,
+        297.87
+      ],
+      "area": 31.5,
+      "circularity": 0.389,
+      "xy_tile": [
+        266.24,
+        297.89
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0159",
+      "kind": "pad",
+      "xy": [
+        531.08,
+        248.33
+      ],
+      "area": 31.5,
+      "circularity": 0.468,
+      "xy_tile": [
+        451.04,
+        248.42
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0160",
+      "kind": "hole",
+      "xy": [
+        357.05,
+        169.56
+      ],
+      "area": 31.0,
+      "circularity": 0.771,
+      "xy_tile": [
+        277.08,
+        169.61
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0161",
+      "kind": "pad",
+      "xy": [
+        409.41,
+        115.08
+      ],
+      "area": 31.0,
+      "circularity": 0.555,
+      "xy_tile": [
+        329.45,
+        115.16
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0162",
+      "kind": "pad",
+      "xy": [
+        242.84,
+        54.56
+      ],
+      "area": 31.0,
+      "circularity": 0.319,
+      "xy_tile": [
+        162.94,
+        54.6
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:hole-0163",
+      "kind": "hole",
+      "xy": [
+        376.72,
+        262.63
+      ],
+      "area": 30.5,
+      "circularity": 0.652,
+      "xy_tile": [
+        296.72,
+        262.66
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0164",
+      "kind": "pad",
+      "xy": [
+        186.59,
+        13.96
+      ],
+      "area": 30.5,
+      "circularity": 0.481,
+      "xy_tile": [
+        106.72,
+        13.99
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-001:pad-0165",
+      "kind": "pad",
+      "xy": [
+        423.21,
+        234.18
+      ],
+      "area": 30.0,
+      "circularity": 0.493,
+      "xy_tile": [
+        343.2,
+        234.24
+      ],
+      "tile_id": "cap-001"
+    },
+    {
+      "id": "cap-002:slot-0001",
+      "kind": "slot",
+      "xy": [
+        249.84,
+        126.21
+      ],
+      "area": 383.5,
+      "circularity": 0.103,
+      "xy_tile": [
+        89.9,
+        126.26
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0002",
+      "kind": "pad",
+      "xy": [
+        205.54,
+        66.91
+      ],
+      "area": 279.5,
+      "circularity": 0.106,
+      "xy_tile": [
+        45.64,
+        66.96
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0003",
+      "kind": "pad",
+      "xy": [
+        518.67,
+        26.64
+      ],
+      "area": 200.5,
+      "circularity": 0.244,
+      "xy_tile": [
+        358.67,
+        26.8
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0004",
+      "kind": "pad",
+      "xy": [
+        370.01,
+        73.37
+      ],
+      "area": 196.0,
+      "circularity": 0.147,
+      "xy_tile": [
+        210.04,
+        73.47
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0005",
+      "kind": "pad",
+      "xy": [
+        485.67,
+        306.0
+      ],
+      "area": 152.0,
+      "circularity": 0.354,
+      "xy_tile": [
+        325.6,
+        306.05
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0006",
+      "kind": "pad",
+      "xy": [
+        485.37,
+        261.84
+      ],
+      "area": 140.5,
+      "circularity": 0.296,
+      "xy_tile": [
+        325.31,
+        261.91
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0007",
+      "kind": "pad",
+      "xy": [
+        577.07,
+        72.67
+      ],
+      "area": 129.5,
+      "circularity": 0.109,
+      "xy_tile": [
+        417.03,
+        72.83
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0008",
+      "kind": "pad",
+      "xy": [
+        487.01,
+        215.01
+      ],
+      "area": 125.0,
+      "circularity": 0.147,
+      "xy_tile": [
+        326.96,
+        215.09
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0009",
+      "kind": "pad",
+      "xy": [
+        299.66,
+        252.72
+      ],
+      "area": 120.5,
+      "circularity": 0.205,
+      "xy_tile": [
+        139.67,
+        252.74
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0010",
+      "kind": "pad",
+      "xy": [
+        618.59,
+        232.23
+      ],
+      "area": 119.0,
+      "circularity": 0.176,
+      "xy_tile": [
+        458.49,
+        232.34
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0011",
+      "kind": "pad",
+      "xy": [
+        555.28,
+        259.16
+      ],
+      "area": 114.0,
+      "circularity": 0.174,
+      "xy_tile": [
+        395.2,
+        259.25
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0012",
+      "kind": "pad",
+      "xy": [
+        211.18,
+        151.82
+      ],
+      "area": 112.5,
+      "circularity": 0.415,
+      "xy_tile": [
+        51.25,
+        151.85
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0013",
+      "kind": "pad",
+      "xy": [
+        605.92,
+        137.58
+      ],
+      "area": 111.0,
+      "circularity": 0.25,
+      "xy_tile": [
+        445.85,
+        137.72
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0014",
+      "kind": "pad",
+      "xy": [
+        428.86,
+        325.38
+      ],
+      "area": 108.5,
+      "circularity": 0.177,
+      "xy_tile": [
+        268.8,
+        325.41
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0015",
+      "kind": "pad",
+      "xy": [
+        508.62,
+        197.56
+      ],
+      "area": 108.5,
+      "circularity": 0.229,
+      "xy_tile": [
+        348.57,
+        197.65
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0016",
+      "kind": "pad",
+      "xy": [
+        423.45,
+        195.07
+      ],
+      "area": 108.5,
+      "circularity": 0.282,
+      "xy_tile": [
+        263.43,
+        195.14
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0017",
+      "kind": "pad",
+      "xy": [
+        549.34,
+        166.04
+      ],
+      "area": 107.0,
+      "circularity": 0.165,
+      "xy_tile": [
+        389.28,
+        166.16
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0018",
+      "kind": "pad",
+      "xy": [
+        482.49,
+        338.0
+      ],
+      "area": 100.5,
+      "circularity": 0.475,
+      "xy_tile": [
+        322.41,
+        338.04
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0019",
+      "kind": "pad",
+      "xy": [
+        176.06,
+        149.71
+      ],
+      "area": 97.5,
+      "circularity": 0.208,
+      "xy_tile": [
+        16.14,
+        149.73
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0020",
+      "kind": "pad",
+      "xy": [
+        430.25,
+        75.31
+      ],
+      "area": 95.5,
+      "circularity": 0.19,
+      "xy_tile": [
+        270.26,
+        75.43
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0021",
+      "kind": "pad",
+      "xy": [
+        526.08,
+        297.55
+      ],
+      "area": 95.0,
+      "circularity": 0.224,
+      "xy_tile": [
+        365.99,
+        297.61
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0022",
+      "kind": "pad",
+      "xy": [
+        316.04,
+        14.91
+      ],
+      "area": 95.0,
+      "circularity": 0.357,
+      "xy_tile": [
+        156.11,
+        15.01
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0023",
+      "kind": "pad",
+      "xy": [
+        571.89,
+        113.77
+      ],
+      "area": 92.0,
+      "circularity": 0.146,
+      "xy_tile": [
+        411.84,
+        113.91
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0024",
+      "kind": "pad",
+      "xy": [
+        502.13,
+        246.74
+      ],
+      "area": 89.0,
+      "circularity": 0.574,
+      "xy_tile": [
+        342.07,
+        246.82
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0025",
+      "kind": "pad",
+      "xy": [
+        580.92,
+        340.78
+      ],
+      "area": 87.5,
+      "circularity": 0.298,
+      "xy_tile": [
+        420.8,
+        340.84
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0026",
+      "kind": "hole",
+      "xy": [
+        509.64,
+        338.24
+      ],
+      "area": 85.0,
+      "circularity": 0.916,
+      "xy_tile": [
+        349.55,
+        338.29
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0027",
+      "kind": "pad",
+      "xy": [
+        315.22,
+        282.7
+      ],
+      "area": 85.0,
+      "circularity": 0.198,
+      "xy_tile": [
+        155.21,
+        282.71
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0028",
+      "kind": "pad",
+      "xy": [
+        496.98,
+        279.67
+      ],
+      "area": 84.0,
+      "circularity": 0.289,
+      "xy_tile": [
+        336.91,
+        279.73
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0029",
+      "kind": "pad",
+      "xy": [
+        428.34,
+        270.87
+      ],
+      "area": 83.5,
+      "circularity": 0.164,
+      "xy_tile": [
+        268.3,
+        270.92
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0030",
+      "kind": "pad",
+      "xy": [
+        432.38,
+        241.9
+      ],
+      "area": 81.5,
+      "circularity": 0.313,
+      "xy_tile": [
+        272.34,
+        241.96
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0031",
+      "kind": "pad",
+      "xy": [
+        257.5,
+        284.28
+      ],
+      "area": 80.5,
+      "circularity": 0.267,
+      "xy_tile": [
+        97.51,
+        284.27
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0032",
+      "kind": "pad",
+      "xy": [
+        510.58,
+        313.86
+      ],
+      "area": 78.0,
+      "circularity": 0.209,
+      "xy_tile": [
+        350.5,
+        313.91
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0033",
+      "kind": "pad",
+      "xy": [
+        426.78,
+        298.86
+      ],
+      "area": 78.0,
+      "circularity": 0.226,
+      "xy_tile": [
+        266.73,
+        298.9
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0034",
+      "kind": "pad",
+      "xy": [
+        183.49,
+        76.79
+      ],
+      "area": 77.0,
+      "circularity": 0.295,
+      "xy_tile": [
+        23.59,
+        76.83
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0035",
+      "kind": "hole",
+      "xy": [
+        268.6,
+        45.84
+      ],
+      "area": 77.0,
+      "circularity": 0.665,
+      "xy_tile": [
+        108.68,
+        45.92
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0036",
+      "kind": "pad",
+      "xy": [
+        427.83,
+        312.57
+      ],
+      "area": 75.5,
+      "circularity": 0.177,
+      "xy_tile": [
+        267.78,
+        312.6
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0037",
+      "kind": "pad",
+      "xy": [
+        354.94,
+        30.73
+      ],
+      "area": 75.0,
+      "circularity": 0.223,
+      "xy_tile": [
+        194.99,
+        30.84
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0038",
+      "kind": "hole",
+      "xy": [
+        205.89,
+        22.54
+      ],
+      "area": 74.5,
+      "circularity": 0.694,
+      "xy_tile": [
+        46.0,
+        22.61
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0039",
+      "kind": "pad",
+      "xy": [
+        346.82,
+        201.29
+      ],
+      "area": 73.5,
+      "circularity": 0.143,
+      "xy_tile": [
+        186.83,
+        201.34
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0040",
+      "kind": "pad",
+      "xy": [
+        523.23,
+        184.71
+      ],
+      "area": 73.5,
+      "circularity": 0.384,
+      "xy_tile": [
+        363.18,
+        184.81
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0041",
+      "kind": "pad",
+      "xy": [
+        266.61,
+        340.17
+      ],
+      "area": 73.0,
+      "circularity": 0.327,
+      "xy_tile": [
+        106.61,
+        340.14
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0042",
+      "kind": "pad",
+      "xy": [
+        287.39,
+        159.87
+      ],
+      "area": 73.0,
+      "circularity": 0.327,
+      "xy_tile": [
+        127.43,
+        159.92
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0043",
+      "kind": "hole",
+      "xy": [
+        224.14,
+        114.06
+      ],
+      "area": 73.0,
+      "circularity": 0.771,
+      "xy_tile": [
+        64.21,
+        114.1
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0044",
+      "kind": "pad",
+      "xy": [
+        280.95,
+        340.72
+      ],
+      "area": 72.5,
+      "circularity": 0.318,
+      "xy_tile": [
+        120.94,
+        340.7
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0045",
+      "kind": "pad",
+      "xy": [
+        252.88,
+        340.77
+      ],
+      "area": 72.5,
+      "circularity": 0.318,
+      "xy_tile": [
+        92.88,
+        340.74
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0046",
+      "kind": "pad",
+      "xy": [
+        486.39,
+        29.7
+      ],
+      "area": 72.5,
+      "circularity": 0.275,
+      "xy_tile": [
+        326.4,
+        29.85
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0047",
+      "kind": "pad",
+      "xy": [
+        558.18,
+        280.04
+      ],
+      "area": 72.0,
+      "circularity": 0.237,
+      "xy_tile": [
+        398.09,
+        280.12
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0048",
+      "kind": "pad",
+      "xy": [
+        201.24,
+        311.67
+      ],
+      "area": 68.5,
+      "circularity": 0.49,
+      "xy_tile": [
+        41.27,
+        311.64
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0049",
+      "kind": "pad",
+      "xy": [
+        270.97,
+        31.15
+      ],
+      "area": 68.0,
+      "circularity": 0.271,
+      "xy_tile": [
+        111.05,
+        31.24
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0050",
+      "kind": "pad",
+      "xy": [
+        626.29,
+        56.77
+      ],
+      "area": 67.5,
+      "circularity": 0.533,
+      "xy_tile": [
+        466.24,
+        56.95
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0051",
+      "kind": "pad",
+      "xy": [
+        596.91,
+        200.41
+      ],
+      "area": 67.0,
+      "circularity": 0.456,
+      "xy_tile": [
+        436.83,
+        200.53
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0052",
+      "kind": "pad",
+      "xy": [
+        604.99,
+        189.08
+      ],
+      "area": 67.0,
+      "circularity": 0.358,
+      "xy_tile": [
+        444.91,
+        189.21
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0053",
+      "kind": "pad",
+      "xy": [
+        358.49,
+        210.2
+      ],
+      "area": 66.5,
+      "circularity": 0.236,
+      "xy_tile": [
+        198.49,
+        210.25
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0054",
+      "kind": "pad",
+      "xy": [
+        625.8,
+        103.63
+      ],
+      "area": 66.5,
+      "circularity": 0.45,
+      "xy_tile": [
+        465.73,
+        103.79
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0055",
+      "kind": "hole",
+      "xy": [
+        456.03,
+        319.01
+      ],
+      "area": 66.0,
+      "circularity": 0.786,
+      "xy_tile": [
+        295.96,
+        319.05
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0056",
+      "kind": "pad",
+      "xy": [
+        338.41,
+        243.23
+      ],
+      "area": 66.0,
+      "circularity": 0.325,
+      "xy_tile": [
+        178.41,
+        243.26
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0057",
+      "kind": "pad",
+      "xy": [
+        504.21,
+        58.09
+      ],
+      "area": 66.0,
+      "circularity": 0.537,
+      "xy_tile": [
+        344.2,
+        58.23
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0058",
+      "kind": "hole",
+      "xy": [
+        412.98,
+        351.12
+      ],
+      "area": 64.0,
+      "circularity": 0.676,
+      "xy_tile": [
+        252.92,
+        351.13
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0059",
+      "kind": "pad",
+      "xy": [
+        238.87,
+        80.62
+      ],
+      "area": 64.0,
+      "circularity": 0.258,
+      "xy_tile": [
+        78.95,
+        80.68
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0060",
+      "kind": "pad",
+      "xy": [
+        272.04,
+        282.37
+      ],
+      "area": 63.5,
+      "circularity": 0.523,
+      "xy_tile": [
+        112.05,
+        282.37
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0061",
+      "kind": "pad",
+      "xy": [
+        431.15,
+        255.67
+      ],
+      "area": 62.5,
+      "circularity": 0.274,
+      "xy_tile": [
+        271.11,
+        255.72
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0062",
+      "kind": "pad",
+      "xy": [
+        352.61,
+        19.05
+      ],
+      "area": 62.5,
+      "circularity": 0.473,
+      "xy_tile": [
+        192.67,
+        19.16
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0063",
+      "kind": "pad",
+      "xy": [
+        484.15,
+        15.36
+      ],
+      "area": 61.0,
+      "circularity": 0.576,
+      "xy_tile": [
+        324.16,
+        15.51
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0064",
+      "kind": "pad",
+      "xy": [
+        312.8,
+        152.25
+      ],
+      "area": 59.5,
+      "circularity": 0.36,
+      "xy_tile": [
+        152.83,
+        152.31
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0065",
+      "kind": "pad",
+      "xy": [
+        341.61,
+        319.93
+      ],
+      "area": 59.0,
+      "circularity": 0.395,
+      "xy_tile": [
+        181.58,
+        319.93
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0066",
+      "kind": "pad",
+      "xy": [
+        419.3,
+        219.93
+      ],
+      "area": 59.0,
+      "circularity": 0.501,
+      "xy_tile": [
+        259.28,
+        219.99
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0067",
+      "kind": "pad",
+      "xy": [
+        301.4,
+        81.78
+      ],
+      "area": 58.5,
+      "circularity": 0.294,
+      "xy_tile": [
+        141.46,
+        81.86
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0068",
+      "kind": "pad",
+      "xy": [
+        282.69,
+        257.7
+      ],
+      "area": 58.0,
+      "circularity": 0.207,
+      "xy_tile": [
+        122.7,
+        257.71
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0069",
+      "kind": "pad",
+      "xy": [
+        623.7,
+        145.06
+      ],
+      "area": 58.0,
+      "circularity": 0.427,
+      "xy_tile": [
+        463.62,
+        145.21
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0070",
+      "kind": "pad",
+      "xy": [
+        541.31,
+        82.49
+      ],
+      "area": 58.0,
+      "circularity": 0.275,
+      "xy_tile": [
+        381.28,
+        82.64
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0071",
+      "kind": "pad",
+      "xy": [
+        535.93,
+        225.74
+      ],
+      "area": 57.5,
+      "circularity": 0.375,
+      "xy_tile": [
+        375.86,
+        225.83
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0072",
+      "kind": "pad",
+      "xy": [
+        547.2,
+        326.38
+      ],
+      "area": 56.5,
+      "circularity": 0.404,
+      "xy_tile": [
+        387.1,
+        326.44
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0073",
+      "kind": "pad",
+      "xy": [
+        219.41,
+        288.08
+      ],
+      "area": 56.5,
+      "circularity": 0.389,
+      "xy_tile": [
+        59.44,
+        288.06
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0074",
+      "kind": "pad",
+      "xy": [
+        273.36,
+        9.69
+      ],
+      "area": 56.5,
+      "circularity": 0.438,
+      "xy_tile": [
+        113.45,
+        9.78
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0075",
+      "kind": "pad",
+      "xy": [
+        596.87,
+        171.55
+      ],
+      "area": 56.0,
+      "circularity": 0.28,
+      "xy_tile": [
+        436.8,
+        171.68
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0076",
+      "kind": "pad",
+      "xy": [
+        537.19,
+        127.07
+      ],
+      "area": 56.0,
+      "circularity": 0.343,
+      "xy_tile": [
+        377.15,
+        127.2
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0077",
+      "kind": "pad",
+      "xy": [
+        443.52,
+        11.56
+      ],
+      "area": 55.5,
+      "circularity": 0.517,
+      "xy_tile": [
+        283.55,
+        11.7
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0078",
+      "kind": "pad",
+      "xy": [
+        296.56,
+        343.04
+      ],
+      "area": 55.0,
+      "circularity": 0.467,
+      "xy_tile": [
+        136.54,
+        343.02
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0079",
+      "kind": "hole",
+      "xy": [
+        630.25,
+        218.54
+      ],
+      "area": 55.0,
+      "circularity": 0.655,
+      "xy_tile": [
+        470.15,
+        218.66
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0080",
+      "kind": "pad",
+      "xy": [
+        456.17,
+        52.05
+      ],
+      "area": 55.0,
+      "circularity": 0.368,
+      "xy_tile": [
+        296.18,
+        52.18
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0081",
+      "kind": "pad",
+      "xy": [
+        580.75,
+        289.62
+      ],
+      "area": 54.0,
+      "circularity": 0.319,
+      "xy_tile": [
+        420.65,
+        289.7
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0082",
+      "kind": "hole",
+      "xy": [
+        191.75,
+        170.04
+      ],
+      "area": 54.0,
+      "circularity": 0.73,
+      "xy_tile": [
+        31.82,
+        170.05
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0083",
+      "kind": "pad",
+      "xy": [
+        329.3,
+        341.44
+      ],
+      "area": 52.5,
+      "circularity": 0.432,
+      "xy_tile": [
+        169.27,
+        341.43
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0084",
+      "kind": "pad",
+      "xy": [
+        597.4,
+        158.6
+      ],
+      "area": 52.5,
+      "circularity": 0.278,
+      "xy_tile": [
+        437.33,
+        158.73
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0085",
+      "kind": "pad",
+      "xy": [
+        508.56,
+        114.98
+      ],
+      "area": 52.5,
+      "circularity": 0.558,
+      "xy_tile": [
+        348.53,
+        115.1
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0086",
+      "kind": "pad",
+      "xy": [
+        246.16,
+        51.4
+      ],
+      "area": 52.0,
+      "circularity": 0.212,
+      "xy_tile": [
+        86.25,
+        51.47
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0087",
+      "kind": "pad",
+      "xy": [
+        183.52,
+        14.14
+      ],
+      "area": 51.5,
+      "circularity": 0.307,
+      "xy_tile": [
+        23.64,
+        14.21
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0088",
+      "kind": "pad",
+      "xy": [
+        601.05,
+        351.39
+      ],
+      "area": 51.0,
+      "circularity": 0.329,
+      "xy_tile": [
+        440.92,
+        351.46
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0089",
+      "kind": "pad",
+      "xy": [
+        176.88,
+        108.48
+      ],
+      "area": 51.0,
+      "circularity": 0.355,
+      "xy_tile": [
+        16.97,
+        108.51
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0090",
+      "kind": "pad",
+      "xy": [
+        408.84,
+        33.01
+      ],
+      "area": 51.0,
+      "circularity": 0.307,
+      "xy_tile": [
+        248.87,
+        33.14
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0091",
+      "kind": "pad",
+      "xy": [
+        214.86,
+        131.28
+      ],
+      "area": 50.5,
+      "circularity": 0.47,
+      "xy_tile": [
+        54.93,
+        131.31
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0092",
+      "kind": "pad",
+      "xy": [
+        325.93,
+        55.43
+      ],
+      "area": 50.0,
+      "circularity": 0.595,
+      "xy_tile": [
+        165.99,
+        55.52
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0093",
+      "kind": "pad",
+      "xy": [
+        286.03,
+        282.24
+      ],
+      "area": 49.5,
+      "circularity": 0.483,
+      "xy_tile": [
+        126.03,
+        282.24
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0094",
+      "kind": "pad",
+      "xy": [
+        442.56,
+        42.8
+      ],
+      "area": 49.5,
+      "circularity": 0.3,
+      "xy_tile": [
+        282.58,
+        42.93
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0095",
+      "kind": "pad",
+      "xy": [
+        506.56,
+        286.02
+      ],
+      "area": 47.5,
+      "circularity": 0.426,
+      "xy_tile": [
+        346.49,
+        286.08
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0096",
+      "kind": "pad",
+      "xy": [
+        300.59,
+        280.77
+      ],
+      "area": 47.0,
+      "circularity": 0.497,
+      "xy_tile": [
+        140.59,
+        280.78
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0097",
+      "kind": "pad",
+      "xy": [
+        579.76,
+        319.88
+      ],
+      "area": 46.5,
+      "circularity": 0.292,
+      "xy_tile": [
+        419.65,
+        319.95
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0098",
+      "kind": "pad",
+      "xy": [
+        625.28,
+        192.49
+      ],
+      "area": 46.5,
+      "circularity": 0.303,
+      "xy_tile": [
+        465.19,
+        192.62
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0099",
+      "kind": "pad",
+      "xy": [
+        347.46,
+        59.16
+      ],
+      "area": 46.5,
+      "circularity": 0.352,
+      "xy_tile": [
+        187.51,
+        59.26
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0100",
+      "kind": "pad",
+      "xy": [
+        353.65,
+        343.72
+      ],
+      "area": 46.0,
+      "circularity": 0.277,
+      "xy_tile": [
+        193.61,
+        343.72
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0101",
+      "kind": "pad",
+      "xy": [
+        566.16,
+        227.18
+      ],
+      "area": 46.0,
+      "circularity": 0.51,
+      "xy_tile": [
+        406.08,
+        227.28
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0102",
+      "kind": "pad",
+      "xy": [
+        209.67,
+        112.57
+      ],
+      "area": 45.5,
+      "circularity": 0.297,
+      "xy_tile": [
+        49.75,
+        112.61
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0103",
+      "kind": "pad",
+      "xy": [
+        180.77,
+        316.93
+      ],
+      "area": 44.0,
+      "circularity": 0.324,
+      "xy_tile": [
+        20.8,
+        316.89
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0104",
+      "kind": "hole",
+      "xy": [
+        464.74,
+        293.95
+      ],
+      "area": 44.0,
+      "circularity": 0.681,
+      "xy_tile": [
+        304.68,
+        294.0
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0105",
+      "kind": "pad",
+      "xy": [
+        181.35,
+        122.73
+      ],
+      "area": 44.0,
+      "circularity": 0.405,
+      "xy_tile": [
+        21.44,
+        122.76
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0106",
+      "kind": "pad",
+      "xy": [
+        457.84,
+        184.56
+      ],
+      "area": 43.5,
+      "circularity": 0.29,
+      "xy_tile": [
+        297.81,
+        184.65
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0107",
+      "kind": "pad",
+      "xy": [
+        521.25,
+        222.69
+      ],
+      "area": 43.0,
+      "circularity": 0.169,
+      "xy_tile": [
+        361.19,
+        222.78
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0108",
+      "kind": "pad",
+      "xy": [
+        408.5,
+        81.54
+      ],
+      "area": 43.0,
+      "circularity": 0.445,
+      "xy_tile": [
+        248.52,
+        81.65
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0109",
+      "kind": "hole",
+      "xy": [
+        562.44,
+        352.49
+      ],
+      "area": 42.5,
+      "circularity": 0.647,
+      "xy_tile": [
+        402.33,
+        352.55
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0110",
+      "kind": "pad",
+      "xy": [
+        221.49,
+        314.13
+      ],
+      "area": 42.5,
+      "circularity": 0.245,
+      "xy_tile": [
+        61.51,
+        314.1
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0111",
+      "kind": "pad",
+      "xy": [
+        593.34,
+        233.51
+      ],
+      "area": 42.5,
+      "circularity": 0.254,
+      "xy_tile": [
+        433.25,
+        233.62
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0112",
+      "kind": "pad",
+      "xy": [
+        332.43,
+        45.25
+      ],
+      "area": 42.5,
+      "circularity": 0.277,
+      "xy_tile": [
+        172.49,
+        45.35
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0113",
+      "kind": "pad",
+      "xy": [
+        604.6,
+        337.87
+      ],
+      "area": 42.0,
+      "circularity": 0.341,
+      "xy_tile": [
+        444.48,
+        337.94
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0114",
+      "kind": "pad",
+      "xy": [
+        555.52,
+        302.55
+      ],
+      "area": 42.0,
+      "circularity": 0.415,
+      "xy_tile": [
+        395.42,
+        302.62
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0115",
+      "kind": "pad",
+      "xy": [
+        306.74,
+        237.0
+      ],
+      "area": 42.0,
+      "circularity": 0.248,
+      "xy_tile": [
+        146.75,
+        237.02
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0116",
+      "kind": "pad",
+      "xy": [
+        502.01,
+        349.57
+      ],
+      "area": 41.5,
+      "circularity": 0.309,
+      "xy_tile": [
+        341.92,
+        349.61
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0117",
+      "kind": "pad",
+      "xy": [
+        423.46,
+        285.61
+      ],
+      "area": 41.5,
+      "circularity": 0.275,
+      "xy_tile": [
+        263.41,
+        285.65
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0118",
+      "kind": "pad",
+      "xy": [
+        453.93,
+        290.16
+      ],
+      "area": 41.0,
+      "circularity": 0.212,
+      "xy_tile": [
+        293.87,
+        290.21
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0119",
+      "kind": "pad",
+      "xy": [
+        335.81,
+        264.75
+      ],
+      "area": 41.0,
+      "circularity": 0.405,
+      "xy_tile": [
+        175.8,
+        264.77
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0120",
+      "kind": "pad",
+      "xy": [
+        201.43,
+        288.96
+      ],
+      "area": 40.5,
+      "circularity": 0.475,
+      "xy_tile": [
+        41.46,
+        288.93
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0121",
+      "kind": "pad",
+      "xy": [
+        200.15,
+        325.94
+      ],
+      "area": 40.0,
+      "circularity": 0.361,
+      "xy_tile": [
+        40.17,
+        325.9
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0122",
+      "kind": "hole",
+      "xy": [
+        622.93,
+        265.29
+      ],
+      "area": 40.0,
+      "circularity": 0.674,
+      "xy_tile": [
+        462.82,
+        265.39
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0123",
+      "kind": "pad",
+      "xy": [
+        485.26,
+        183.26
+      ],
+      "area": 40.0,
+      "circularity": 0.333,
+      "xy_tile": [
+        325.22,
+        183.35
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0124",
+      "kind": "pad",
+      "xy": [
+        482.71,
+        158.65
+      ],
+      "area": 40.0,
+      "circularity": 0.513,
+      "xy_tile": [
+        322.68,
+        158.75
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0125",
+      "kind": "pad",
+      "xy": [
+        594.83,
+        128.01
+      ],
+      "area": 40.0,
+      "circularity": 0.264,
+      "xy_tile": [
+        434.77,
+        128.15
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0126",
+      "kind": "pad",
+      "xy": [
+        442.28,
+        26.38
+      ],
+      "area": 40.0,
+      "circularity": 0.385,
+      "xy_tile": [
+        282.3,
+        26.52
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0127",
+      "kind": "pad",
+      "xy": [
+        569.68,
+        197.17
+      ],
+      "area": 39.5,
+      "circularity": 0.385,
+      "xy_tile": [
+        409.61,
+        197.28
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0128",
+      "kind": "hole",
+      "xy": [
+        235.26,
+        184.14
+      ],
+      "area": 39.5,
+      "circularity": 0.677,
+      "xy_tile": [
+        75.31,
+        184.16
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0129",
+      "kind": "hole",
+      "xy": [
+        513.5,
+        281.26
+      ],
+      "area": 39.0,
+      "circularity": 0.641,
+      "xy_tile": [
+        353.42,
+        281.33
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0130",
+      "kind": "pad",
+      "xy": [
+        316.22,
+        222.94
+      ],
+      "area": 39.0,
+      "circularity": 0.464,
+      "xy_tile": [
+        156.23,
+        222.97
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0131",
+      "kind": "pad",
+      "xy": [
+        312.88,
+        44.94
+      ],
+      "area": 39.0,
+      "circularity": 0.252,
+      "xy_tile": [
+        152.94,
+        45.03
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0132",
+      "kind": "hole",
+      "xy": [
+        529.6,
+        268.92
+      ],
+      "area": 38.5,
+      "circularity": 0.66,
+      "xy_tile": [
+        369.52,
+        269.0
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0133",
+      "kind": "pad",
+      "xy": [
+        228.37,
+        330.44
+      ],
+      "area": 38.0,
+      "circularity": 0.322,
+      "xy_tile": [
+        68.38,
+        330.41
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0134",
+      "kind": "pad",
+      "xy": [
+        450.48,
+        204.47
+      ],
+      "area": 38.0,
+      "circularity": 0.422,
+      "xy_tile": [
+        290.45,
+        204.55
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0135",
+      "kind": "pad",
+      "xy": [
+        502.15,
+        170.81
+      ],
+      "area": 37.5,
+      "circularity": 0.431,
+      "xy_tile": [
+        342.11,
+        170.91
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0136",
+      "kind": "pad",
+      "xy": [
+        477.85,
+        238.15
+      ],
+      "area": 37.0,
+      "circularity": 0.391,
+      "xy_tile": [
+        317.8,
+        238.22
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0137",
+      "kind": "hole",
+      "xy": [
+        170.47,
+        179.93
+      ],
+      "area": 37.0,
+      "circularity": 0.646,
+      "xy_tile": [
+        10.55,
+        179.93
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0138",
+      "kind": "hole",
+      "xy": [
+        622.94,
+        348.71
+      ],
+      "area": 36.5,
+      "circularity": 0.803,
+      "xy_tile": [
+        462.81,
+        348.78
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0139",
+      "kind": "hole",
+      "xy": [
+        347.96,
+        279.24
+      ],
+      "area": 36.5,
+      "circularity": 0.666,
+      "xy_tile": [
+        187.94,
+        279.26
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0140",
+      "kind": "pad",
+      "xy": [
+        551.88,
+        221.92
+      ],
+      "area": 36.5,
+      "circularity": 0.501,
+      "xy_tile": [
+        391.81,
+        222.02
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0141",
+      "kind": "pad",
+      "xy": [
+        476.61,
+        293.54
+      ],
+      "area": 36.0,
+      "circularity": 0.325,
+      "xy_tile": [
+        316.54,
+        293.59
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0142",
+      "kind": "hole",
+      "xy": [
+        622.28,
+        321.02
+      ],
+      "area": 35.5,
+      "circularity": 0.781,
+      "xy_tile": [
+        462.15,
+        321.1
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0143",
+      "kind": "pad",
+      "xy": [
+        232.91,
+        316.63
+      ],
+      "area": 35.5,
+      "circularity": 0.388,
+      "xy_tile": [
+        72.92,
+        316.6
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0144",
+      "kind": "pad",
+      "xy": [
+        234.43,
+        304.76
+      ],
+      "area": 35.5,
+      "circularity": 0.28,
+      "xy_tile": [
+        74.45,
+        304.74
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0145",
+      "kind": "pad",
+      "xy": [
+        371.83,
+        248.53
+      ],
+      "area": 35.5,
+      "circularity": 0.311,
+      "xy_tile": [
+        211.81,
+        248.57
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0146",
+      "kind": "hole",
+      "xy": [
+        622.71,
+        306.94
+      ],
+      "area": 35.0,
+      "circularity": 0.786,
+      "xy_tile": [
+        462.59,
+        307.03
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0147",
+      "kind": "pad",
+      "xy": [
+        545.48,
+        57.0
+      ],
+      "area": 35.0,
+      "circularity": 0.473,
+      "xy_tile": [
+        385.46,
+        57.16
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0148",
+      "kind": "pad",
+      "xy": [
+        456.16,
+        265.08
+      ],
+      "area": 34.5,
+      "circularity": 0.396,
+      "xy_tile": [
+        296.11,
+        265.14
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0149",
+      "kind": "hole",
+      "xy": [
+        525.0,
+        240.26
+      ],
+      "area": 34.5,
+      "circularity": 0.671,
+      "xy_tile": [
+        364.93,
+        240.34
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0150",
+      "kind": "hole",
+      "xy": [
+        622.44,
+        278.89
+      ],
+      "area": 34.0,
+      "circularity": 0.845,
+      "xy_tile": [
+        462.33,
+        278.99
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0151",
+      "kind": "pad",
+      "xy": [
+        269.28,
+        19.42
+      ],
+      "area": 34.0,
+      "circularity": 0.385,
+      "xy_tile": [
+        109.37,
+        19.51
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0152",
+      "kind": "hole",
+      "xy": [
+        361.86,
+        334.9
+      ],
+      "area": 33.5,
+      "circularity": 0.851,
+      "xy_tile": [
+        201.82,
+        334.9
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0153",
+      "kind": "pad",
+      "xy": [
+        436.11,
+        281.26
+      ],
+      "area": 33.5,
+      "circularity": 0.342,
+      "xy_tile": [
+        276.06,
+        281.3
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0154",
+      "kind": "hole",
+      "xy": [
+        362.29,
+        266.96
+      ],
+      "area": 33.5,
+      "circularity": 0.791,
+      "xy_tile": [
+        202.27,
+        266.99
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0155",
+      "kind": "pad",
+      "xy": [
+        396.02,
+        46.02
+      ],
+      "area": 33.5,
+      "circularity": 0.528,
+      "xy_tile": [
+        236.05,
+        46.14
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0156",
+      "kind": "hole",
+      "xy": [
+        435.74,
+        334.03
+      ],
+      "area": 33.0,
+      "circularity": 0.741,
+      "xy_tile": [
+        275.68,
+        334.06
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0157",
+      "kind": "pad",
+      "xy": [
+        246.7,
+        229.86
+      ],
+      "area": 33.0,
+      "circularity": 0.342,
+      "xy_tile": [
+        86.73,
+        229.87
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0158",
+      "kind": "pad",
+      "xy": [
+        567.13,
+        145.96
+      ],
+      "area": 33.0,
+      "circularity": 0.268,
+      "xy_tile": [
+        407.07,
+        146.09
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0159",
+      "kind": "pad",
+      "xy": [
+        612.83,
+        61.43
+      ],
+      "area": 33.0,
+      "circularity": 0.471,
+      "xy_tile": [
+        452.78,
+        61.6
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0160",
+      "kind": "pad",
+      "xy": [
+        404.67,
+        58.24
+      ],
+      "area": 33.0,
+      "circularity": 0.471,
+      "xy_tile": [
+        244.7,
+        58.35
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0161",
+      "kind": "hole",
+      "xy": [
+        622.6,
+        334.89
+      ],
+      "area": 32.5,
+      "circularity": 0.852,
+      "xy_tile": [
+        462.47,
+        334.97
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0162",
+      "kind": "pad",
+      "xy": [
+        312.87,
+        265.05
+      ],
+      "area": 32.5,
+      "circularity": 0.423,
+      "xy_tile": [
+        152.87,
+        265.06
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0163",
+      "kind": "pad",
+      "xy": [
+        454.16,
+        234.12
+      ],
+      "area": 32.5,
+      "circularity": 0.423,
+      "xy_tile": [
+        294.12,
+        234.19
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0164",
+      "kind": "pad",
+      "xy": [
+        321.82,
+        334.4
+      ],
+      "area": 32.0,
+      "circularity": 0.338,
+      "xy_tile": [
+        161.8,
+        334.39
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0165",
+      "kind": "hole",
+      "xy": [
+        622.27,
+        251.28
+      ],
+      "area": 32.0,
+      "circularity": 0.795,
+      "xy_tile": [
+        462.16,
+        251.39
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0166",
+      "kind": "pad",
+      "xy": [
+        379.6,
+        182.21
+      ],
+      "area": 32.0,
+      "circularity": 0.526,
+      "xy_tile": [
+        219.6,
+        182.27
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0167",
+      "kind": "pad",
+      "xy": [
+        376.11,
+        317.61
+      ],
+      "area": 31.5,
+      "circularity": 0.41,
+      "xy_tile": [
+        216.07,
+        317.62
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0168",
+      "kind": "pad",
+      "xy": [
+        346.26,
+        297.88
+      ],
+      "area": 31.5,
+      "circularity": 0.389,
+      "xy_tile": [
+        186.24,
+        297.89
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0169",
+      "kind": "pad",
+      "xy": [
+        349.69,
+        252.48
+      ],
+      "area": 31.0,
+      "circularity": 0.509,
+      "xy_tile": [
+        189.68,
+        252.51
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0170",
+      "kind": "hole",
+      "xy": [
+        357.07,
+        169.55
+      ],
+      "area": 31.0,
+      "circularity": 0.771,
+      "xy_tile": [
+        197.08,
+        169.61
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0171",
+      "kind": "pad",
+      "xy": [
+        281.72,
+        54.82
+      ],
+      "area": 31.0,
+      "circularity": 0.555,
+      "xy_tile": [
+        121.79,
+        54.9
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0172",
+      "kind": "hole",
+      "xy": [
+        376.74,
+        262.63
+      ],
+      "area": 30.5,
+      "circularity": 0.652,
+      "xy_tile": [
+        216.72,
+        262.66
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0173",
+      "kind": "pad",
+      "xy": [
+        531.19,
+        248.35
+      ],
+      "area": 30.5,
+      "circularity": 0.454,
+      "xy_tile": [
+        371.12,
+        248.43
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0174",
+      "kind": "pad",
+      "xy": [
+        550.25,
+        149.0
+      ],
+      "area": 30.5,
+      "circularity": 0.523,
+      "xy_tile": [
+        390.2,
+        149.12
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0175",
+      "kind": "pad",
+      "xy": [
+        409.47,
+        115.07
+      ],
+      "area": 30.5,
+      "circularity": 0.571,
+      "xy_tile": [
+        249.48,
+        115.17
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:hole-0176",
+      "kind": "hole",
+      "xy": [
+        249.18,
+        12.39
+      ],
+      "area": 30.5,
+      "circularity": 0.775,
+      "xy_tile": [
+        89.28,
+        12.48
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0177",
+      "kind": "pad",
+      "xy": [
+        538.08,
+        262.22
+      ],
+      "area": 30.0,
+      "circularity": 0.493,
+      "xy_tile": [
+        378.0,
+        262.3
+      ],
+      "tile_id": "cap-002"
+    },
+    {
+      "id": "cap-002:pad-0178",
+      "kind": "pad",
+      "xy": [
+        423.23,
+        234.18
+      ],
+      "area": 30.0,
+      "circularity": 0.493,
+      "xy_tile": [
+        263.2,
+        234.24
+      ],
+      "tile_id": "cap-002"
+    }
+  ],
+  "edges": [
+    {
+      "src": "cap-000",
+      "dst": "cap-001",
+      "M": [
+        [
+          0.999763,
+          -0.00035,
+          -79.823192
+        ],
+        [
+          0.00035,
+          0.999763,
+          -0.034806
+        ]
+      ],
+      "M_to_ref": [
+        [
+          1.000237,
+          0.000351,
+          79.842155
+        ],
+        [
+          -0.000351,
+          1.000237,
+          0.006834
+        ]
+      ],
+      "overlap": 0.8333,
+      "direction": "previous_tile_to_current_frame",
+      "merge_ms": 0.21,
+      "track_ms": 16.14
+    },
+    {
+      "src": "cap-001",
+      "dst": "cap-002",
+      "M": [
+        [
+          0.999881,
+          6.4e-05,
+          -79.998743
+        ],
+        [
+          -6.4e-05,
+          0.999881,
+          0.049419
+        ]
+      ],
+      "M_to_ref": [
+        [
+          1.000357,
+          0.000287,
+          159.869411
+        ],
+        [
+          -0.000287,
+          1.000357,
+          -0.065525
+        ]
+      ],
+      "overlap": 0.8333,
+      "direction": "previous_tile_to_current_frame",
+      "merge_ms": 0.25,
+      "track_ms": 16.71
+    }
+  ],
+  "note": "xy 在首张瓦片坐标系；没有全板像素画布"
+}

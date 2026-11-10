@@ -1,0 +1,718 @@
+{
+  "ok": true,
+  "mosaic": "assets/maps/SAMPLE-PARTIAL-001-VIDEO.png",
+  "frames_total": 96,
+  "frames_accepted": 96,
+  "frames_used": 96,
+  "frames_skipped": 0,
+  "canvas_size": [
+    1691,
+    2697
+  ],
+  "coverage_hint": 0.4550212065139289,
+  "message": "video mosaic accepted 96/96 frames",
+  "frames": [
+    {
+      "index": 0,
+      "accepted": true,
+      "reason": "first frame",
+      "inliers": 0,
+      "matches": 0
+    },
+    {
+      "index": 1,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1446,
+      "matches": 1487
+    },
+    {
+      "index": 2,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1368,
+      "matches": 1389
+    },
+    {
+      "index": 3,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1611,
+      "matches": 1630
+    },
+    {
+      "index": 4,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1566,
+      "matches": 1592
+    },
+    {
+      "index": 5,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1503,
+      "matches": 1533
+    },
+    {
+      "index": 6,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1506,
+      "matches": 1529
+    },
+    {
+      "index": 7,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1551,
+      "matches": 1587
+    },
+    {
+      "index": 8,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1256,
+      "matches": 1317
+    },
+    {
+      "index": 9,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1549,
+      "matches": 1583
+    },
+    {
+      "index": 10,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1514,
+      "matches": 1558
+    },
+    {
+      "index": 11,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1445,
+      "matches": 1482
+    },
+    {
+      "index": 12,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1556,
+      "matches": 1593
+    },
+    {
+      "index": 13,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1580,
+      "matches": 1596
+    },
+    {
+      "index": 14,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1453,
+      "matches": 1482
+    },
+    {
+      "index": 15,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1434,
+      "matches": 1465
+    },
+    {
+      "index": 16,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1284,
+      "matches": 1346
+    },
+    {
+      "index": 17,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1452,
+      "matches": 1509
+    },
+    {
+      "index": 18,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1476,
+      "matches": 1500
+    },
+    {
+      "index": 19,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1528,
+      "matches": 1554
+    },
+    {
+      "index": 20,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1516,
+      "matches": 1560
+    },
+    {
+      "index": 21,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1421,
+      "matches": 1463
+    },
+    {
+      "index": 22,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1513,
+      "matches": 1555
+    },
+    {
+      "index": 23,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1582,
+      "matches": 1627
+    },
+    {
+      "index": 24,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1343,
+      "matches": 1427
+    },
+    {
+      "index": 25,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1575,
+      "matches": 1613
+    },
+    {
+      "index": 26,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1551,
+      "matches": 1599
+    },
+    {
+      "index": 27,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1422,
+      "matches": 1464
+    },
+    {
+      "index": 28,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1485,
+      "matches": 1514
+    },
+    {
+      "index": 29,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1510,
+      "matches": 1570
+    },
+    {
+      "index": 30,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1505,
+      "matches": 1534
+    },
+    {
+      "index": 31,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1478,
+      "matches": 1509
+    },
+    {
+      "index": 32,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1179,
+      "matches": 1246
+    },
+    {
+      "index": 33,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1525,
+      "matches": 1560
+    },
+    {
+      "index": 34,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1521,
+      "matches": 1546
+    },
+    {
+      "index": 35,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1518,
+      "matches": 1559
+    },
+    {
+      "index": 36,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1470,
+      "matches": 1521
+    },
+    {
+      "index": 37,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1418,
+      "matches": 1466
+    },
+    {
+      "index": 38,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1459,
+      "matches": 1510
+    },
+    {
+      "index": 39,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1543,
+      "matches": 1581
+    },
+    {
+      "index": 40,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1147,
+      "matches": 1238
+    },
+    {
+      "index": 41,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1578,
+      "matches": 1620
+    },
+    {
+      "index": 42,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1500,
+      "matches": 1558
+    },
+    {
+      "index": 43,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1425,
+      "matches": 1458
+    },
+    {
+      "index": 44,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1411,
+      "matches": 1438
+    },
+    {
+      "index": 45,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1505,
+      "matches": 1541
+    },
+    {
+      "index": 46,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1619,
+      "matches": 1643
+    },
+    {
+      "index": 47,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1495,
+      "matches": 1544
+    },
+    {
+      "index": 48,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1276,
+      "matches": 1333
+    },
+    {
+      "index": 49,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1542,
+      "matches": 1580
+    },
+    {
+      "index": 50,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1580,
+      "matches": 1599
+    },
+    {
+      "index": 51,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1507,
+      "matches": 1541
+    },
+    {
+      "index": 52,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1480,
+      "matches": 1529
+    },
+    {
+      "index": 53,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1412,
+      "matches": 1467
+    },
+    {
+      "index": 54,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1449,
+      "matches": 1485
+    },
+    {
+      "index": 55,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1589,
+      "matches": 1633
+    },
+    {
+      "index": 56,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1231,
+      "matches": 1292
+    },
+    {
+      "index": 57,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1566,
+      "matches": 1629
+    },
+    {
+      "index": 58,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1427,
+      "matches": 1480
+    },
+    {
+      "index": 59,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1430,
+      "matches": 1462
+    },
+    {
+      "index": 60,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1476,
+      "matches": 1514
+    },
+    {
+      "index": 61,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1518,
+      "matches": 1548
+    },
+    {
+      "index": 62,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1601,
+      "matches": 1637
+    },
+    {
+      "index": 63,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1551,
+      "matches": 1584
+    },
+    {
+      "index": 64,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1384,
+      "matches": 1443
+    },
+    {
+      "index": 65,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1572,
+      "matches": 1608
+    },
+    {
+      "index": 66,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1604,
+      "matches": 1628
+    },
+    {
+      "index": 67,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1487,
+      "matches": 1519
+    },
+    {
+      "index": 68,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1448,
+      "matches": 1495
+    },
+    {
+      "index": 69,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1487,
+      "matches": 1525
+    },
+    {
+      "index": 70,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1483,
+      "matches": 1517
+    },
+    {
+      "index": 71,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1558,
+      "matches": 1599
+    },
+    {
+      "index": 72,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1351,
+      "matches": 1394
+    },
+    {
+      "index": 73,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1572,
+      "matches": 1629
+    },
+    {
+      "index": 74,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1458,
+      "matches": 1504
+    },
+    {
+      "index": 75,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1529,
+      "matches": 1550
+    },
+    {
+      "index": 76,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1458,
+      "matches": 1498
+    },
+    {
+      "index": 77,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1528,
+      "matches": 1561
+    },
+    {
+      "index": 78,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1564,
+      "matches": 1583
+    },
+    {
+      "index": 79,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1547,
+      "matches": 1581
+    },
+    {
+      "index": 80,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1257,
+      "matches": 1314
+    },
+    {
+      "index": 81,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1493,
+      "matches": 1525
+    },
+    {
+      "index": 82,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1550,
+      "matches": 1574
+    },
+    {
+      "index": 83,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1504,
+      "matches": 1531
+    },
+    {
+      "index": 84,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1522,
+      "matches": 1544
+    },
+    {
+      "index": 85,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1538,
+      "matches": 1573
+    },
+    {
+      "index": 86,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1464,
+      "matches": 1497
+    },
+    {
+      "index": 87,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1587,
+      "matches": 1612
+    },
+    {
+      "index": 88,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1430,
+      "matches": 1464
+    },
+    {
+      "index": 89,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1590,
+      "matches": 1630
+    },
+    {
+      "index": 90,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1486,
+      "matches": 1533
+    },
+    {
+      "index": 91,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1574,
+      "matches": 1610
+    },
+    {
+      "index": 92,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1531,
+      "matches": 1565
+    },
+    {
+      "index": 93,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1502,
+      "matches": 1536
+    },
+    {
+      "index": 94,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1529,
+      "matches": 1559
+    },
+    {
+      "index": 95,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 1450,
+      "matches": 1484
+    }
+  ],
+  "map_source": "video_mosaic",
+  "global_map_path": "../maps/SAMPLE-PARTIAL-001-VIDEO.png",
+  "project": "assets/projects/SAMPLE-PARTIAL-001-VIDEO.json",
+  "state": "MosaicReady",
+  "scan": {
+    "pattern": "serpentine",
+    "source": "assets/samples/SAMPLE-PARTIAL-001/global_ref.png",
+    "frame_count": 96,
+    "window_size": [
+      562,
+      729
+    ],
+    "step": {
+      "dx": 84,
+      "dy": 109
+    },
+    "overlap_x": 0.8505338078291815,
+    "overlap_y": 0.850480109739369,
+    "rows": 12,
+    "cols": 8
+  },
+  "compare": {
+    "ok": true,
+    "ncc": 0.992485887441815,
+    "coverage": 0.9995633335263351,
+    "mean_abs": 3.556071792619124,
+    "inliers": 2149,
+    "matches": 2221,
+    "notes": "inliers=2149 matches=2221 ncc=0.992 coverage=1.0"
+  }
+}

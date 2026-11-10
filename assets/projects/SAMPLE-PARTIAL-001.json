@@ -1,0 +1,89 @@
+{
+  "schema_version": "0.1",
+  "board_id": "SAMPLE-PARTIAL-001",
+  "name": "局部瓦片样例",
+  "global_map_path": "../maps/SAMPLE-PARTIAL-001.png",
+  "global_ref_path": "../samples/SAMPLE-PARTIAL-001/global_ref.png",
+  "topology_db": "../topology/SAMPLE-PARTIAL-001.json",
+  "fiducials": [],
+  "components": [
+    {
+      "component_id": "C-LIVE",
+      "base_pixel_box": [
+        399.61406727828745,
+        199.5296636085627,
+        48.0,
+        28.0
+      ],
+      "status": "unchecked",
+      "core_params": {
+        "name": "C-LIVE",
+        "value": "topo",
+        "package": "pad"
+      },
+      "extended_params": {},
+      "geo_fingerprint": {
+        "kind": "constellation",
+        "anchor_xy": [
+          423.61,
+          213.53
+        ],
+        "neighbors": [
+          {
+            "id": "hole-0268",
+            "kind": "hole",
+            "dxy": [
+              -25.43,
+              -0.62
+            ]
+          },
+          {
+            "id": "pad-0246",
+            "kind": "pad",
+            "dxy": [
+              -9.31,
+              25.01
+            ]
+          },
+          {
+            "id": "pad-0340",
+            "kind": "pad",
+            "dxy": [
+              -30.06,
+              18.21
+            ]
+          },
+          {
+            "id": "pad-0310",
+            "kind": "pad",
+            "dxy": [
+              -29.46,
+              25.65
+            ]
+          },
+          {
+            "id": "slot-0060",
+            "kind": "slot",
+            "dxy": [
+              30.58,
+              24.43
+            ]
+          },
+          {
+            "id": "pad-0196",
+            "kind": "pad",
+            "dxy": [
+              9.4,
+              39.23
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "meta": {
+    "sample_tiles_dir": "../samples/SAMPLE-PARTIAL-001/tiles",
+    "source_note": "imported from 局部图片.zip; global=微信图片_20261109184831_115_34.jpg; tiles=20261109-*.jpg",
+    "imported_at": "2026-11-09T19:56:57+08:00"
+  }
+}

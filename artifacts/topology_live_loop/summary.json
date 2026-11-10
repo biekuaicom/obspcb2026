@@ -1,0 +1,255 @@
+{
+  "frames": 16,
+  "matched": 16,
+  "failed": 0,
+  "match_rate": 1.0,
+  "confidence_median": 0.957,
+  "pose_error_px_median": 0.039,
+  "elapsed_ms_median": 42.43,
+  "no_library_message": "未设置拓扑库，无法定位",
+  "no_library_overlay": "artifacts/topology_live_loop/no_library.png",
+  "video": "artifacts/topology_live_loop/live_loop.mp4",
+  "frames_dir": "artifacts/topology_live_loop/frames",
+  "rows": [
+    {
+      "index": 0,
+      "origin": [
+        40,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9685,
+      "inliers": 246,
+      "pose_error_px": 0.093,
+      "elapsed_ms": 38.59,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_000.png"
+    },
+    {
+      "index": 1,
+      "origin": [
+        68,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9559,
+      "inliers": 260,
+      "pose_error_px": 0.042,
+      "elapsed_ms": 37.6,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_001.png"
+    },
+    {
+      "index": 2,
+      "origin": [
+        96,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.934,
+      "inliers": 269,
+      "pose_error_px": 0.022,
+      "elapsed_ms": 38.24,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_002.png"
+    },
+    {
+      "index": 3,
+      "origin": [
+        124,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9365,
+      "inliers": 280,
+      "pose_error_px": 0.017,
+      "elapsed_ms": 37.78,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_003.png"
+    },
+    {
+      "index": 4,
+      "origin": [
+        152,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9556,
+      "inliers": 301,
+      "pose_error_px": 0.041,
+      "elapsed_ms": 44.86,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_004.png"
+    },
+    {
+      "index": 5,
+      "origin": [
+        180,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9587,
+      "inliers": 302,
+      "pose_error_px": 0.037,
+      "elapsed_ms": 47.01,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_005.png"
+    },
+    {
+      "index": 6,
+      "origin": [
+        208,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9641,
+      "inliers": 295,
+      "pose_error_px": 0.056,
+      "elapsed_ms": 44.84,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_006.png"
+    },
+    {
+      "index": 7,
+      "origin": [
+        236,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9932,
+      "inliers": 294,
+      "pose_error_px": 0.0,
+      "elapsed_ms": 42.53,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_007.png"
+    },
+    {
+      "index": 8,
+      "origin": [
+        264,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9799,
+      "inliers": 293,
+      "pose_error_px": 0.0,
+      "elapsed_ms": 39.71,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_008.png"
+    },
+    {
+      "index": 9,
+      "origin": [
+        292,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9866,
+      "inliers": 295,
+      "pose_error_px": 0.0,
+      "elapsed_ms": 43.22,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_009.png"
+    },
+    {
+      "index": 10,
+      "origin": [
+        320,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9833,
+      "inliers": 295,
+      "pose_error_px": 0.007,
+      "elapsed_ms": 41.2,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_010.png"
+    },
+    {
+      "index": 11,
+      "origin": [
+        348,
+        40
+      ],
+      "kind": "clean",
+      "ok": true,
+      "confidence": 0.9966,
+      "inliers": 290,
+      "pose_error_px": 0.0,
+      "elapsed_ms": 42.33,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_011.png"
+    },
+    {
+      "index": 12,
+      "origin": [
+        376,
+        160
+      ],
+      "kind": "medium_dark",
+      "ok": true,
+      "confidence": 0.8603,
+      "inliers": 314,
+      "pose_error_px": 0.061,
+      "elapsed_ms": 48.08,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_012.png"
+    },
+    {
+      "index": 13,
+      "origin": [
+        404,
+        160
+      ],
+      "kind": "medium_dark",
+      "ok": true,
+      "confidence": 0.8665,
+      "inliers": 305,
+      "pose_error_px": 0.223,
+      "elapsed_ms": 44.98,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_013.png"
+    },
+    {
+      "index": 14,
+      "origin": [
+        432,
+        160
+      ],
+      "kind": "medium_dark",
+      "ok": true,
+      "confidence": 0.8643,
+      "inliers": 293,
+      "pose_error_px": 0.101,
+      "elapsed_ms": 41.58,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_014.png"
+    },
+    {
+      "index": 15,
+      "origin": [
+        460,
+        160
+      ],
+      "kind": "medium_dark",
+      "ok": true,
+      "confidence": 0.8471,
+      "inliers": 288,
+      "pose_error_px": 0.083,
+      "elapsed_ms": 42.92,
+      "message": "ok",
+      "overlay": "artifacts/topology_live_loop/frames/frame_015.png"
+    }
+  ]
+}

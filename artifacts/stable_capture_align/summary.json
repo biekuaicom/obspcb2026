@@ -1,0 +1,71 @@
+{
+  "board_id": "SAMPLE-PARTIAL-001",
+  "source": "assets/samples/SAMPLE-PARTIAL-001/global_ref.png",
+  "shots": 3,
+  "rejects": 2,
+  "reject_reasons": [
+    "画面模糊，等待清晰",
+    "未能跟上已拍区域，请退回红色覆盖处重拍"
+  ],
+  "overlap_mean": 0.8419,
+  "track_ms_median": 12.42,
+  "merge_ms_median": 0.25,
+  "chain_points": 395,
+  "chain_mask_size": [
+    627,
+    396
+  ],
+  "full_canvas": false,
+  "chain": "artifacts/stable_capture_align/chain.json",
+  "topology_db": "artifacts/stable_capture_align/topology_db.json",
+  "coverage": "artifacts/stable_capture_align/coverage.png",
+  "union_red_px": 172024,
+  "last_tile_red_px": 130413,
+  "union_over_last": 1.319,
+  "decisions": [
+    {
+      "ok": false,
+      "reason": "画面模糊，等待清晰",
+      "overlap": null,
+      "tile_id": null,
+      "elapsed_ms": 0.0
+    },
+    {
+      "ok": true,
+      "reason": "已拍摄",
+      "overlap": null,
+      "tile_id": "cap-000",
+      "elapsed_ms": 0.0
+    },
+    {
+      "ok": true,
+      "reason": "已拍摄",
+      "overlap": 0.837,
+      "tile_id": "cap-001",
+      "elapsed_ms": 12.06
+    },
+    {
+      "ok": true,
+      "reason": "已拍摄",
+      "overlap": 0.8469,
+      "tile_id": "cap-002",
+      "elapsed_ms": 12.79
+    },
+    {
+      "ok": false,
+      "reason": "未能跟上已拍区域，请退回红色覆盖处重拍",
+      "overlap": null,
+      "tile_id": null,
+      "elapsed_ms": 33.63
+    }
+  ],
+  "angle_error_deg_median": 0.055,
+  "angle_error_deg_max": 0.076,
+  "angle_errors_deg": [
+    -0.034,
+    -0.076
+  ],
+  "edge_rms_before_median": 4.468,
+  "edge_rms_after_median": 1.775,
+  "align_dir": "artifacts/stable_capture_align/align"
+}

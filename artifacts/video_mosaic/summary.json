@@ -1,0 +1,76 @@
+{
+  "ok": true,
+  "mosaic": "assets/maps/VIDEO-MAP-001.png",
+  "frames_total": 8,
+  "frames_accepted": 7,
+  "frames_used": 7,
+  "frames_skipped": 1,
+  "canvas_size": [
+    600,
+    420
+  ],
+  "coverage_hint": 0.17407539682539683,
+  "message": "video mosaic accepted 7/8 frames",
+  "frames": [
+    {
+      "index": 0,
+      "accepted": true,
+      "reason": "first frame",
+      "inliers": 0,
+      "matches": 0
+    },
+    {
+      "index": 1,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 231,
+      "matches": 241
+    },
+    {
+      "index": 2,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 217,
+      "matches": 220
+    },
+    {
+      "index": 3,
+      "accepted": false,
+      "reason": "too few matches",
+      "inliers": 0,
+      "matches": 0
+    },
+    {
+      "index": 4,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 209,
+      "matches": 216
+    },
+    {
+      "index": 5,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 202,
+      "matches": 210
+    },
+    {
+      "index": 6,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 220,
+      "matches": 224
+    },
+    {
+      "index": 7,
+      "accepted": true,
+      "reason": "accepted via previous",
+      "inliers": 218,
+      "matches": 223
+    }
+  ],
+  "map_source": "video_mosaic",
+  "global_map_path": "../maps/VIDEO-MAP-001.png",
+  "project": "assets/projects/VIDEO-MAP-001.json",
+  "state": "MosaicReady"
+}

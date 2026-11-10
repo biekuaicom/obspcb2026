@@ -1,0 +1,25 @@
+{
+  "schema_version": "0.1",
+  "board_id": "VIDEO-MAP-001",
+  "name": "VIDEO-MAP-001",
+  "global_map_path": "../maps/VIDEO-MAP-001.png",
+  "map_source": "video_mosaic",
+  "fiducials": [],
+  "components": [],
+  "meta": {
+    "mapping": {
+      "mode": "video_mosaic",
+      "state": "MosaicReady",
+      "frames_total": 8,
+      "frames_used": 7,
+      "frames_skipped": 1,
+      "canvas_size": [
+        600,
+        420
+      ],
+      "coverage_hint": 0.17407539682539683,
+      "overlap_hint": 0.85,
+      "motion": "feature"
+    }
+  }
+}

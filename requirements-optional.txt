@@ -1,0 +1,25 @@
+# PCB AR 标注 — 可选依赖（YOLO 自动检测种子）
+# 日期：2026-11-09（Asia/Shanghai）
+#
+# 别名：TECH_SPEC §6 所称 requirements-detect.txt 与本文件等价；
+#       请勿再维护第二份内容重复的 requirements-detect.txt。
+#
+# 说明：
+# - 仅在需要 vision.detect / YOLO 种子标注时安装。
+# - ultralytics 会拉取 torch 等，体积可能达数 GB，切勿打进默认核心包。
+# - 首次可跑通后建议对可选环境单独 `pip freeze` 锁定。
+# - CPU 默认即可；若有 CUDA，请按 PyTorch 官网选择对应 torch wheel，
+#   再安装 ultralytics，避免被默认 CPU wheel 覆盖。
+# - 未安装时：主程序仍须可启动（TECH_SPEC §6.2）。
+# - D13【已确认】：pydantic 不属于 optional/detect；也不进核心 requirements.txt。
+#
+# 安装：
+#   pip install -r requirements.txt
+#   pip install -r requirements-optional.txt
+
+# YOLO 训练/推理封装；会依赖 torch、torchvision 等
+# 版本区间宽松：以能 `import ultralytics` 且加载自备权重为准
+ultralytics>=8.0,<9
+
+# 注意：不要在此强制 pin torch==...，除非团队已统一 CUDA/CPU 矩阵。
+# 打包时核心 PyInstaller spec 应 excludes torch / ultralytics。

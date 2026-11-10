@@ -1,0 +1,46 @@
+{
+  "schema_version": "0.1",
+  "board_id": "DEMO-PCB-001",
+  "name": "演示板",
+  "global_map_path": "assets/maps/DEMO-PCB-001.png",
+  "pixel_per_mm": { "x": 42.0, "y": 42.0 },
+  "fiducials": [
+    {
+      "id": "F1",
+      "pixel": [120, 80],
+      "mm": { "x": 0.0, "y": 0.0 },
+      "template_path": "assets/templates/DEMO-PCB-001_F1.png"
+    },
+    {
+      "id": "F2",
+      "pixel": [3800, 90],
+      "mm": { "x": 88.0, "y": 0.2 }
+    }
+  ],
+  "components": [
+    {
+      "component_id": "R1",
+      "absolute_pos_mm": { "x": 12.5, "y": 34.2 },
+      "base_pixel_box": [100, 150, 60, 30],
+      "status": "unchecked",
+      "core_params": {
+        "name": "R1",
+        "value": "10K",
+        "package": "0805"
+      },
+      "extended_params": {
+        "tolerance": "1%",
+        "supplier": "",
+        "sop_note": "注意焊接温度"
+      },
+      "meta": {
+        "source": "yolo_seed",
+        "updated_at": "2026-11-09T17:00:00+08:00"
+      }
+    }
+  ],
+  "meta": {
+    "created_at": "2026-11-09T16:00:00+08:00",
+    "updated_at": "2026-11-09T17:00:00+08:00"
+  }
+}

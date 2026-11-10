@@ -1,0 +1,9 @@
+# PCB AR 标注 — 开发 / 测试 / 打包工具
+# 日期：2026-11-09（Asia/Shanghai）
+# 决策：D13【已确认】— pydantic 可留在本文件，不进核心 requirements.txt
+
+-r requirements.txt
+pytest>=8.0
+pyinstaller>=6.0
+# 可选：仅当开发态想用 pydantic 做 schema 实验时取消下一行注释；运行时校验当前为手写
+# pydantic>=2.0

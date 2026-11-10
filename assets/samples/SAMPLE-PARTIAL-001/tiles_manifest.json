@@ -1,0 +1,23 @@
+{
+  "board_id": "SAMPLE-PARTIAL-001",
+  "tiles": [
+    "tiles/20261109-184132-411.jpg",
+    "tiles/20261109-184159-641.jpg",
+    "tiles/20261109-184215-833.jpg",
+    "tiles/20261109-184257-820.jpg",
+    "tiles/20261109-184310-270.jpg",
+    "tiles/20261109-184324-253.jpg",
+    "tiles/20261109-184342-276.jpg",
+    "tiles/20261109-184430-714.jpg",
+    "tiles/20261109-184505-719.jpg",
+    "tiles/20261109-184517-793.jpg",
+    "tiles/20261109-184526-735.jpg",
+    "tiles/20261109-184534-423.jpg",
+    "tiles/20261109-184545-523.jpg",
+    "tiles/20261109-184559-39.jpg",
+    "tiles/20261109-184605-656.jpg"
+  ],
+  "global_ref": "global_ref.png",
+  "source_note": "global filename locked to 微信图片_20261109184831_115_34.jpg; tiles locked to 20261109-*.jpg; not classified by image size",
+  "imported_at": "2026-11-09T19:20:28+08:00"
+}

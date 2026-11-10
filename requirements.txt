@@ -1,0 +1,10 @@
+# PCB AR 标注 — 核心运行时依赖（不含检测）
+# 日期：2026-11-09（Asia/Shanghai）
+# 决策：D13【已确认】— pydantic 不进本文件；需要时放 requirements-dev.txt
+#
+# 说明：模板区间，首次可跑通后可用 pip freeze 锁定。
+# 勿加入 ultralytics / torch / pydantic。
+
+numpy>=1.26
+opencv-python>=4.8
+PyQt6>=6.6
