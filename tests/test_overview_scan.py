@@ -1,5 +1,7 @@
 """Color overview export and the headless / UI scan entry points."""
 
+import threading
+import time
 from pathlib import Path
 
 import cv2
@@ -8,6 +10,7 @@ from PyQt6.QtWidgets import QDialog
 
 from app.ui.main_window import MainWindow
 from app.ui.scan_dialog import ScanWorkbenchDialog
+from vision import capture as capture_module
 from vision.stable_capture import (
     OVERVIEW_MAX_PIXELS,
     OVERVIEW_MAX_SIDE,
@@ -145,6 +148,178 @@ def test_run_demo_scan_writes_overview_without_qt(tmp_path):
     assert summary["full_canvas"] is False
     assert summary["shots"] >= 2
     assert summary["rejects"] >= 1
+
+
+def _wait(qapp, predicate, timeout: float = 3.0) -> bool:
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        qapp.processEvents()
+        if predicate():
+            return True
+        time.sleep(0.01)
+    return False
+
+
+def _pixmap_ready(label) -> bool:
+    pixmap = label.pixmap()
+    return pixmap is not None and not pixmap.isNull()
+
+
+def test_scan_workbench_shows_live_preview_without_start(qapp):
+    frame = np.zeros((48, 64, 3), np.uint8)
+    frame[:] = (20, 40, 60)
+    dialog = ScanWorkbenchDialog(lambda: frame)
+    dialog.show()
+    qapp.processEvents()
+    try:
+        assert dialog.windowTitle() == "扫描建图"
+        assert dialog.start_button.text() == "开始扫描"
+        assert dialog.session.started is False
+        assert not dialog.capture_button.isEnabled()
+        assert _pixmap_ready(dialog.live_view)
+        assert "等待画面" not in dialog.live_view.text()
+        assert "开始扫描" in dialog.status_label.text()
+    finally:
+        dialog.close()
+
+
+def test_scan_workbench_replaces_placeholder_while_opening(qapp):
+    dialog = ScanWorkbenchDialog(lambda: None, source_status=lambda: ("pending", ""))
+    dialog.show()
+    qapp.processEvents()
+    try:
+        assert "等待画面" not in dialog.live_view.text()
+        assert "请稍候" in dialog.live_view.text()
+        assert dialog.sample_button.isEnabled()
+        assert dialog.demo_button.isEnabled()
+        assert dialog.close_button.isEnabled()
+        assert not dialog.capture_button.isEnabled()
+        dialog.close_button.click()
+        qapp.processEvents()
+        assert not dialog.isVisible()
+    finally:
+        dialog.close()
+
+
+def test_scan_workbench_preview_updates_when_frame_arrives(qapp):
+    holder: dict = {"frame": None}
+    dialog = ScanWorkbenchDialog(lambda: holder["frame"], source_status=lambda: ("pending", ""))
+    dialog.show()
+    qapp.processEvents()
+    try:
+        assert "请稍候" in dialog.live_view.text()
+        holder["frame"] = np.full((30, 40, 3), 200, np.uint8)
+        assert _wait(qapp, lambda: _pixmap_ready(dialog.live_view), timeout=2)
+        assert dialog.session.started is False
+        assert dialog.start_button.text() == "开始扫描"
+        assert not dialog.capture_button.isEnabled()
+    finally:
+        dialog.close()
+
+
+def test_scan_workbench_stays_usable_when_camera_failed(qapp):
+    notice = "无法打开摄像头 0，已改用合成帧。"
+    dialog = ScanWorkbenchDialog(lambda: None, source_status=lambda: ("synthetic", notice))
+    dialog.show()
+    qapp.processEvents()
+    try:
+        assert "等待画面" not in dialog.live_view.text()
+        assert "摄像头" in dialog.live_view.text()
+        assert dialog.sample_button.isEnabled()
+        dialog.use_sample_views()
+        qapp.processEvents()
+        assert dialog.sample_nav.isVisible()
+        assert _pixmap_ready(dialog.live_view)
+        assert dialog.session.started is False
+        assert dialog.close_button.isEnabled()
+    finally:
+        dialog.close()
+
+
+def test_open_scan_workbench_previews_without_start_click(qapp):
+    window = MainWindow(source="synthetic", width=160, height=120)
+    window.show()
+    try:
+        assert _wait(qapp, lambda: window.current_frame() is not None)
+        dialog = window.open_scan_workbench()
+        qapp.processEvents()
+        assert dialog.session.started is False
+        assert dialog.start_button.text() == "开始扫描"
+        assert _pixmap_ready(dialog.live_view)
+        assert "等待画面" not in dialog.live_view.text()
+        dialog.close()
+    finally:
+        window.close()
+        qapp.processEvents()
+        assert not window.capture.isRunning()
+
+
+def test_open_scan_workbench_after_missing_camera_shows_fallback(qapp):
+    window = MainWindow(source=31, width=80, height=60)
+    window.show()
+    try:
+        assert _wait(
+            qapp,
+            lambda: window.current_frame() is not None and "合成帧" in window._capture_notice,
+        )
+        dialog = window.open_scan_workbench()
+        qapp.processEvents()
+        assert _pixmap_ready(dialog.live_view)
+        assert "合成帧" in dialog.status_label.text()
+        assert dialog.session.started is False
+        assert dialog.sample_button.isEnabled()
+        assert dialog.close_button.isEnabled()
+        dialog.close()
+    finally:
+        window.close()
+        qapp.processEvents()
+        assert not window.capture.isRunning()
+
+
+def test_workbench_shows_fallback_when_camera_open_hangs(qapp, monkeypatch):
+    hang = threading.Event()
+
+    class Hung:
+        def __init__(self, *_args, **_kwargs):
+            hang.wait(timeout=5)
+
+        def isOpened(self):
+            return False
+
+        def release(self):
+            pass
+
+        def read(self):
+            return False, None
+
+        def set(self, *_args, **_kwargs):
+            return False
+
+    monkeypatch.setattr(capture_module, "CAMERA_OPEN_TIMEOUT_S", 0.3)
+    monkeypatch.setattr(capture_module, "CAMERA_READ_TIMEOUT_S", 0.3)
+    monkeypatch.setattr(capture_module, "camera_device_present", lambda _index: True)
+    monkeypatch.setattr(cv2, "VideoCapture", Hung)
+    window = MainWindow(source=0, width=80, height=60)
+    window.show()
+    try:
+        assert _wait(
+            qapp,
+            lambda: window.current_frame() is not None and "超时" in window._capture_notice,
+            timeout=3,
+        )
+        dialog = window.open_scan_workbench()
+        qapp.processEvents()
+        assert dialog.session.started is False
+        assert _pixmap_ready(dialog.live_view)
+        assert "超时" in dialog.status_label.text()
+        assert "合成帧" in dialog.status_label.text()
+        assert dialog.close_button.isEnabled()
+        dialog.close()
+    finally:
+        hang.set()
+        window.close()
+        qapp.processEvents()
+        assert not window.capture.isRunning()
 
 
 def test_main_window_scan_action_and_dialog(qapp):

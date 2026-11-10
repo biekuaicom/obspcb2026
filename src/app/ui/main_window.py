@@ -82,6 +82,7 @@ class MainWindow(QMainWindow):
         self._fps_t0 = time.monotonic()
         self._load_error = ""
         self._last_frame = None
+        self._capture_notice = ""
         self._scan_dialog: ScanWorkbenchDialog | None = None
 
         self.setCentralWidget(self.canvas)
@@ -122,7 +123,7 @@ class MainWindow(QMainWindow):
         self._load_sample()
         self.canvas.set_tracking_ok(False)
         self.statusBar().showMessage(
-            "正在打开视频…  无摄像头时请点工具栏「演示/合成帧」或「一键演示扫描」。扫描建图：Ctrl+M"
+            "正在打开视频…  打不开或超时时会自动改用合成帧。扫描建图：Ctrl+M"
         )
         self.statusBar().setToolTip(
             "主路径 LocalGlobal，仿射降级。"
@@ -182,7 +183,12 @@ class MainWindow(QMainWindow):
         if self._scan_dialog is not None:
             self._scan_dialog.close()
         board_id = self.store.project.board_id if self.store.project is not None else "SCAN-BOARD"
-        dialog = ScanWorkbenchDialog(self.current_frame, parent=self, board_id=board_id)
+        dialog = ScanWorkbenchDialog(
+            self.current_frame,
+            parent=self,
+            board_id=board_id,
+            source_status=self.capture_status,
+        )
         self._scan_dialog = dialog
         dialog.show()
         return dialog
@@ -191,7 +197,12 @@ class MainWindow(QMainWindow):
         dialog = self.open_scan_workbench()
         dialog.run_sample_demo()
 
+    def capture_status(self) -> tuple[str, str]:
+        """``(mode, notice)`` for the scan workbench. Notice is empty when the source is healthy."""
+        return self.capture.mode, self._capture_notice
+
     def use_synthetic_source(self) -> None:
+        self._capture_notice = ""
         self.capture.set_source("synthetic")
         self.statusBar().showMessage("已切换到演示/合成帧。打开「扫描建图…」即可在没有摄像头时预览流程。")
         self.sidebar.set_notice("当前视频源：演示/合成帧。要用样例板生成整张图，请点「一键演示扫描」或在扫描工作台里「使用样例画面」。")
@@ -207,6 +218,7 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(0, self.close)
 
     def _on_capture_error(self, message: str) -> None:
+        self._capture_notice = message
         self.sidebar.set_notice(message)
         self._refresh_status()
 
@@ -236,8 +248,9 @@ class MainWindow(QMainWindow):
             board = "工程未加载"
         else:
             board = "无工程"
+        notice = f" · {self._capture_notice}" if self._capture_notice else ""
         self.statusBar().showMessage(
-            f"视频：{mode} {size} · {fps} · {board} · 扫描建图 Ctrl+M · 标注层空 · 跟踪：桩，未配准"
+            f"视频：{mode} {size} · {fps} · {board}{notice} · 扫描建图 Ctrl+M · 标注层空 · 跟踪：桩，未配准"
         )
 
     def _smoke_timeout(self) -> None:

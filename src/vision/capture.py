@@ -2,11 +2,19 @@
 
 ``VideoCaptureThread`` is the only place that calls ``cv2.VideoCapture.read``.
 The UI thread receives a copied BGR snapshot plus a wall-clock timestamp.
+
+Opening and reading a camera can block inside OpenCV with no way to interrupt
+the call. On Windows that shows up as ``VideoCapture(index)`` hanging in the
+default backend before the synthetic fallback ever runs. Camera open/read
+therefore runs on a private thread, bounded by a timeout. Windows tries
+DirectShow and then Media Foundation. A failed, empty, or timed-out open falls
+back to synthetic frames and emits one ``error``.
 """
 
 from __future__ import annotations
 
 import os
+import queue
 import sys
 import threading
 import time
@@ -18,6 +26,13 @@ from PyQt6.QtCore import QThread, pyqtSignal
 _SYNTHETIC = "synthetic"
 _DEFAULT_SIZE = (960, 540)
 _SYNTHETIC_FPS = 15.0
+_POLL_S = 0.05
+
+# Bounds so a missing or wedged camera cannot stall the grab thread forever.
+# Tests monkeypatch these; they are not part of the StableCaptureSession API.
+CAMERA_OPEN_TIMEOUT_S = 5.0
+CAMERA_READ_TIMEOUT_S = 3.0
+CAMERA_PROBE_WINDOW_S = 0.8
 
 
 def render_synthetic_frame(width: int, height: int, tick: int) -> np.ndarray:
@@ -74,6 +89,197 @@ def camera_device_present(index: int) -> bool:
     return True
 
 
+def camera_backends(platform: str | None = None) -> list[tuple[str, int | None]]:
+    """Return ``(label, apiPreference)`` pairs to try, in order.
+
+    ``apiPreference is None`` means ``cv2.VideoCapture(index)`` with the
+    platform default. Windows tries DirectShow first (it usually fails fast)
+    and then Media Foundation.
+    """
+    name = sys.platform if platform is None else platform
+    if name.startswith("win"):
+        backends: list[tuple[str, int | None]] = []
+        if hasattr(cv2, "CAP_DSHOW"):
+            backends.append(("DirectShow", int(cv2.CAP_DSHOW)))
+        if hasattr(cv2, "CAP_MSMF"):
+            backends.append(("Media Foundation", int(cv2.CAP_MSMF)))
+        return backends or [("默认", None)]
+    return [("默认", None)]
+
+
+def open_failure_message(index: int, failures: list[str]) -> str:
+    """One Simplified Chinese line for a camera that never produced a frame."""
+    if not failures:
+        return f"无法打开摄像头 {index}，已改用合成帧。"
+    if len(failures) == 1 and failures[0].startswith("默认"):
+        reason = failures[0].removeprefix("默认").strip()
+        if reason in ("", "失败"):
+            return f"无法打开摄像头 {index}，已改用合成帧。"
+        if reason == "打开超时":
+            return f"摄像头 {index} 打开超时，已改用合成帧。"
+        if reason == "读帧超时":
+            return f"摄像头 {index} 读帧超时，已改用合成帧。"
+        if reason == "无画面":
+            return f"摄像头 {index} 没有画面，已改用合成帧。"
+    detail = "、".join(failures)
+    if any("超时" in item for item in failures):
+        return f"摄像头 {index} 打开失败或超时（{detail}），已改用合成帧。"
+    return f"无法打开摄像头 {index}（{detail}），已改用合成帧。"
+
+
+def _timeout_props() -> list[int]:
+    props: list[int] = []
+    if hasattr(cv2, "CAP_PROP_OPEN_TIMEOUT_MSEC"):
+        props.extend([int(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC), int(CAMERA_OPEN_TIMEOUT_S * 1000)])
+    if hasattr(cv2, "CAP_PROP_READ_TIMEOUT_MSEC"):
+        props.extend([int(cv2.CAP_PROP_READ_TIMEOUT_MSEC), int(CAMERA_READ_TIMEOUT_S * 1000)])
+    return props
+
+
+def _make_capture(index: int, backend: int | None) -> cv2.VideoCapture:
+    """Open a device. The default backend keeps the historical one-argument call."""
+    if backend is None:
+        return cv2.VideoCapture(int(index))
+    api = int(backend)
+    props = _timeout_props()
+    if not props:
+        return cv2.VideoCapture(int(index), api)
+    try:
+        return cv2.VideoCapture(int(index), api, props)
+    except TypeError:
+        return cv2.VideoCapture(int(index), api)
+
+
+def open_camera_device(payload: dict) -> cv2.VideoCapture | None:
+    """Open one backend and apply the requested size. ``None`` means not opened.
+
+    Runs on the camera worker thread. Callers must not use the returned
+    capture from any other thread.
+    """
+    capture = None
+    try:
+        capture = _make_capture(int(payload["index"]), payload.get("backend"))
+        if capture is None or not capture.isOpened():
+            if capture is not None:
+                capture.release()
+            return None
+        width = payload.get("width")
+        height = payload.get("height")
+        if width and int(width) > 0:
+            capture.set(cv2.CAP_PROP_FRAME_WIDTH, float(width))
+        if height and int(height) > 0:
+            capture.set(cv2.CAP_PROP_FRAME_HEIGHT, float(height))
+        return capture
+    except Exception:
+        if capture is not None:
+            capture.release()
+        raise
+
+
+class _CameraWorker:
+    """Own ``VideoCapture`` on one thread so a hung open/read can be abandoned.
+
+    OpenCV's camera calls are not interruptible and are not safe to share
+    across threads. The grab thread only waits on a reply queue. On timeout it
+    sets ``_drop`` and never touches that capture again; the worker releases it
+    if the blocked call ever returns.
+    """
+
+    def __init__(self) -> None:
+        self._queue: queue.Queue = queue.Queue()
+        self._drop = threading.Event()
+        self._thread = threading.Thread(target=self._loop, name="camera-worker", daemon=True)
+        self._thread.start()
+
+    def call(
+        self,
+        kind: str,
+        payload,
+        timeout_s: float,
+        cancel: threading.Event | None,
+    ) -> tuple[str, object]:
+        """Return ``(status, value)``. Status is ``ok``, ``timeout``, ``cancelled``, or ``abandoned``."""
+        if self._drop.is_set():
+            return "abandoned", None
+        reply: queue.Queue = queue.Queue(maxsize=1)
+        self._queue.put((kind, payload, reply))
+        deadline = time.monotonic() + max(0.0, float(timeout_s))
+        while True:
+            if cancel is not None and cancel.is_set():
+                self._drop.set()
+                return "cancelled", None
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                self._drop.set()
+                return "timeout", None
+            try:
+                status, value = reply.get(timeout=min(_POLL_S, remaining))
+            except queue.Empty:
+                continue
+            return status, value
+
+    def shutdown(self, timeout_s: float = 0.8) -> None:
+        """Release the device when the worker is still answering. A dropped worker is left to exit itself."""
+        if self._drop.is_set():
+            return
+        status, _value = self.call("shutdown", None, timeout_s, None)
+        if status != "ok":
+            self._drop.set()
+
+    def _loop(self) -> None:
+        capture: cv2.VideoCapture | None = None
+        try:
+            while not self._drop.is_set():
+                try:
+                    kind, payload, reply = self._queue.get(timeout=_POLL_S)
+                except queue.Empty:
+                    continue
+                if self._drop.is_set() and kind != "shutdown":
+                    reply.put(("abandoned", None))
+                    return
+                try:
+                    if kind == "shutdown":
+                        capture = self._take_release(capture)
+                        reply.put(("ok", None))
+                        return
+                    if kind == "open":
+                        capture = self._take_release(capture)
+                        capture = open_camera_device(payload if isinstance(payload, dict) else {})
+                        reply.put(("ok", capture is not None))
+                    elif kind == "read":
+                        reply.put(("ok", self._read(capture)))
+                    else:
+                        reply.put(("error", f"未知命令 {kind}"))
+                except Exception as exc:  # noqa: BLE001 — report and keep the worker alive
+                    reply.put(("error", exc))
+                if self._drop.is_set():
+                    return
+        finally:
+            self._safe_release(capture)
+
+    @staticmethod
+    def _read(capture: cv2.VideoCapture | None) -> tuple[bool, np.ndarray | None]:
+        if capture is None:
+            return False, None
+        ok, frame = capture.read()
+        if not ok or frame is None:
+            return False, None
+        return True, np.ascontiguousarray(frame).copy()
+
+    @staticmethod
+    def _safe_release(capture: cv2.VideoCapture | None) -> None:
+        if capture is None:
+            return
+        try:
+            capture.release()
+        except Exception:
+            pass
+
+    def _take_release(self, capture: cv2.VideoCapture | None) -> None:
+        self._safe_release(capture)
+        return None
+
+
 class VideoCaptureThread(QThread):
     """OpenCV capture on a ``QThread``. Do not call ``read()`` on the UI thread.
 
@@ -83,8 +289,8 @@ class VideoCaptureThread(QThread):
         BGR ``ndarray`` snapshot and ``time.time()`` seconds. Treat the array
         as read-only; mutate a copy.
     error(str)
-        Open failure or unexpected loop error. A missing camera falls back to
-        synthetic frames after one ``error``.
+        Open failure or unexpected loop error. A missing, failed, or timed-out
+        camera falls back to synthetic frames after one ``error``.
     stopped()
         Emitted after ``run`` releases the capture, including after ``stop``.
 
@@ -111,6 +317,8 @@ class VideoCaptureThread(QThread):
         self._stop_event = threading.Event()
         self._lock = threading.Lock()
         self._capture: cv2.VideoCapture | None = None
+        self._worker: _CameraWorker | None = None
+        self._primed: np.ndarray | None = None
         self._mode = "pending"
         self._tick = 0
         self._open_key: tuple | None = None
@@ -199,18 +407,73 @@ class VideoCaptureThread(QThread):
 
     def _open_camera(self, index: int) -> None:
         if not camera_device_present(index):
-            self._mode = "synthetic"
-            self.error.emit(f"摄像头 {index} 不可用，已改用合成帧（source='synthetic'）。")
+            self._enter_synthetic(f"摄像头 {index} 不可用，已改用合成帧（source='synthetic'）。")
             return
-        capture = cv2.VideoCapture(index)
-        if not capture.isOpened():
-            capture.release()
-            self._mode = "synthetic"
-            self.error.emit(f"无法打开摄像头 {index}，已改用合成帧。")
-            return
-        self._apply_size(capture)
-        self._capture = capture
-        self._mode = "camera"
+        failures: list[str] = []
+        for label, backend in camera_backends():
+            if self._stop_event.is_set():
+                return
+            worker = _CameraWorker()
+            adopted = False
+            try:
+                status, opened = worker.call(
+                    "open",
+                    {
+                        "index": index,
+                        "backend": backend,
+                        "width": self._width,
+                        "height": self._height,
+                    },
+                    CAMERA_OPEN_TIMEOUT_S,
+                    self._stop_event,
+                )
+                if status == "cancelled" or self._stop_event.is_set():
+                    return
+                if status == "timeout":
+                    failures.append(f"{label} 打开超时")
+                    continue
+                if status != "ok" or not opened:
+                    failures.append(f"{label} 失败")
+                    continue
+                primed, probe = self._probe_frames(worker)
+                if probe == "cancelled" or self._stop_event.is_set():
+                    return
+                if probe == "frame" and primed is not None:
+                    self._worker = worker
+                    self._primed = primed
+                    self._mode = "camera"
+                    adopted = True
+                    return
+                if probe == "timeout":
+                    failures.append(f"{label} 读帧超时")
+                else:
+                    failures.append(f"{label} 无画面")
+            finally:
+                if not adopted:
+                    worker.shutdown()
+        self._enter_synthetic(open_failure_message(index, failures))
+
+    def _probe_frames(self, worker: _CameraWorker) -> tuple[np.ndarray | None, str]:
+        """Read until one real frame arrives, the probe window ends, or the read hangs."""
+        deadline = time.monotonic() + max(0.0, CAMERA_PROBE_WINDOW_S)
+        while not self._stop_event.is_set():
+            status, value = worker.call("read", None, CAMERA_READ_TIMEOUT_S, self._stop_event)
+            if status == "cancelled":
+                return None, "cancelled"
+            if status == "timeout":
+                return None, "timeout"
+            if status == "ok" and isinstance(value, tuple) and value[0] and value[1] is not None:
+                return value[1], "frame"
+            if time.monotonic() >= deadline:
+                return None, "empty"
+            if self._stop_event.wait(0.05):
+                return None, "cancelled"
+        return None, "cancelled"
+
+    def _enter_synthetic(self, message: str) -> None:
+        self._mode = "synthetic"
+        self._primed = None
+        self.error.emit(message)
 
     def _open_file(self, path: str) -> None:
         capture = cv2.VideoCapture(path)
@@ -222,18 +485,12 @@ class VideoCaptureThread(QThread):
         self._capture = capture
         self._mode = "file"
 
-    def _apply_size(self, capture: cv2.VideoCapture) -> None:
-        if self._width and self._width > 0:
-            capture.set(cv2.CAP_PROP_FRAME_WIDTH, float(self._width))
-        if self._height and self._height > 0:
-            capture.set(cv2.CAP_PROP_FRAME_HEIGHT, float(self._height))
-
     def _read_frame(self) -> np.ndarray | None:
+        if self._mode == "camera":
+            return self._read_camera()
         capture = self._capture
         if capture is None:
-            self._tick += 1
-            width, height = self._frame_size()
-            return render_synthetic_frame(width, height, self._tick)
+            return self._synthetic_frame()
         ok, frame = capture.read()
         if not ok or frame is None:
             if self._mode == "file":
@@ -243,10 +500,35 @@ class VideoCaptureThread(QThread):
                 self.error.emit("读帧失败，已改用合成帧。")
                 self._release_capture()
                 self._mode = "synthetic"
-                self._tick += 1
-                width, height = self._frame_size()
-                return render_synthetic_frame(width, height, self._tick)
+                return self._synthetic_frame()
         return np.ascontiguousarray(frame).copy()
+
+    def _read_camera(self) -> np.ndarray | None:
+        if self._primed is not None:
+            frame = self._primed
+            self._primed = None
+            return frame
+        worker = self._worker
+        if worker is None:
+            self._enter_synthetic("读帧失败，已改用合成帧。")
+            return self._synthetic_frame()
+        status, value = worker.call("read", None, CAMERA_READ_TIMEOUT_S, self._stop_event)
+        if status == "cancelled":
+            return None
+        if status == "timeout":
+            self._release_worker()
+            self._enter_synthetic("摄像头读帧超时，已改用合成帧。")
+            return self._synthetic_frame()
+        if status != "ok" or not isinstance(value, tuple) or not value[0] or value[1] is None:
+            self._release_worker()
+            self._enter_synthetic("读帧失败，已改用合成帧。")
+            return self._synthetic_frame()
+        return value[1]
+
+    def _synthetic_frame(self) -> np.ndarray:
+        self._tick += 1
+        width, height = self._frame_size()
+        return render_synthetic_frame(width, height, self._tick)
 
     def _pace(self) -> None:
         if self._mode == "synthetic":
@@ -262,8 +544,18 @@ class VideoCaptureThread(QThread):
                 return
             self.msleep(max(1, int(min(remaining, 0.05) * 1000)))
 
+    def _release_worker(self) -> None:
+        with self._lock:
+            worker = self._worker
+            self._worker = None
+            self._primed = None
+        if worker is not None:
+            worker.shutdown()
+
     def _release_capture(self) -> None:
-        capture = self._capture
-        self._capture = None
+        self._release_worker()
+        with self._lock:
+            capture = self._capture
+            self._capture = None
         if capture is not None:
             capture.release()
