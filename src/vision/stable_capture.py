@@ -10,10 +10,16 @@ A constrained low-resolution color overview is placed after each accepted shot
 residual keeps the sharper tile or leaves a gap. Labels live in board
 coordinates and are drawn after the pose is solved.
 
-Accepted stills, and only those, are also split into typed elements. The red
-overlap must agree on pads or holes and, when both tiles show them, on text,
-outlines, or traces. Preview keeps painting the last locked red union and does
-not run that separation.
+Accepted stills, and only those, are also split into typed elements and
+corner fiducials. Each still is placed into the first-tile (or fiducial)
+board frame by type-to-type matching in the overlap: silkscreen, pads,
+holes, outlines, pins, traces, and color blocks. A periodic via lattice
+alone does not lock. If the red-overlap elements disagree, the shot is
+rejected and is never force-blended. Tiles may arrive out of order; a
+frame that does not fit the last shot can still lock to an earlier region.
+After each accepted shot, typed and fiducial constraints refine one global
+board frame so chain drift does not accumulate. Preview keeps painting the
+last locked red union and does not run that separation.
 
 Video mosaic remains an optional bypass in ``vision.mosaic``.
 """
@@ -33,11 +39,23 @@ import numpy as np
 from vision.board_lock import (
     SAFE_RESIDUAL_PX,
     composite_registered_tile,
+    estimate_feature_pose,
     estimate_similarity_pose,
+    extract_feature_pack,
     landmarks_from_snapshot,
+    masked_ncc,
     refine_pose_graph,
 )
-from vision.elements import align_red_region, extract_board_elements
+from vision.elements import (
+    align_red_region,
+    detect_fiducials,
+    estimate_typed_pose,
+    extract_board_elements,
+    fiducial_correspondences,
+    is_periodic_lattice,
+    typed_correspondences,
+    unique_landmark_support,
+)
 from vision.structure_tree import extract_structure_tree
 from vision.topology import (
     SCHEMA_VERSION,
@@ -152,6 +170,8 @@ class _Tile:
     align_residual_px: float = 0.0
     sharpness: float = 0.0
     elements: object | None = None
+    feature_pack: object | None = None
+    fiducials: list = field(default_factory=list)
 
 
 @dataclass
@@ -351,6 +371,18 @@ class StableCaptureSession:
         if not self.tiles:
             tile = self._store_tile(frame, None, None)
             return CaptureDecision(True, _ACCEPTED, overlap=None, tile_id=tile.tile_id)
+        # Heavy placement runs on the accepted still, not during preview.
+        # Typed elements and fiducials are the authority; preview is only a hint.
+        started = time.perf_counter()
+        query_elements = extract_board_elements(frame, max_long_edge=self.extractor.max_long_edge)
+        query_fiducials = detect_fiducials(frame)
+        placed = self._place_accepted_still(frame, query_elements, query_fiducials)
+        self._track_ms = float(self._track_ms or 0.0) + (time.perf_counter() - started) * 1000.0
+        preview_ok = self._tracked and self._pose is not None and self._pose.ok and self._anchor_id is not None
+        if placed is not None:
+            self._install_typed_pose(frame, placed)
+        elif not preview_ok:
+            return self._reject(self._track_note or _LOST, overlap=self._overlap, elapsed_ms=self._track_ms or 0.0)
         if not self._tracked or self._pose is None or not self._pose.ok or self._anchor_id is None:
             return self._reject(self._track_note or _LOST, overlap=self._overlap, elapsed_ms=self._track_ms or 0.0)
         overlap = float(self._overlap or 0.0)
@@ -366,9 +398,11 @@ class StableCaptureSession:
         if not coverage.ok:
             return self._reject(coverage.reason, overlap=overlap, elapsed_ms=self._track_ms or 0.0)
         anchor = next(item for item in self.tiles if item.tile_id == self._anchor_id)
-        query_elements = self._check_red_elements(frame, anchor, self._pose.M)
+        query_elements = self._check_red_elements(frame, anchor, self._pose.M, query_elements=query_elements)
         verdict = self.element_alignment
-        if verdict is not None and verdict.status in {"disagree", "lattice_only"}:
+        if verdict is not None and verdict.status == "lattice_only":
+            return self._reject(_UNCERTAIN, overlap=overlap, elapsed_ms=self._track_ms or 0.0)
+        if verdict is not None and verdict.status == "disagree" and not self._ignore_flaky_secondary(anchor, frame, verdict):
             return self._reject(_ELEMENT_MISMATCH, overlap=overlap, elapsed_ms=self._track_ms or 0.0)
         tile = self._store_tile(frame, self._anchor_id, self._pose.M, coverage_check=coverage, elements=query_elements)
         self._close_loops(tile)
@@ -461,7 +495,7 @@ class StableCaptureSession:
         return list(self._quads)
 
     def _track_union(self, frame: np.ndarray) -> None:
-        """Lock this frame to the board constellation and project every captured tile."""
+        """Lock this frame to the board and project every captured tile."""
         started = time.perf_counter()
         observed = self.extractor.extract(frame)
         structure = extract_structure_tree(frame)
@@ -475,20 +509,34 @@ class StableCaptureSession:
             library_w=library_w,
             query_w=query_w,
         )
+        width = int(frame.shape[1])
+        height = int(frame.shape[0])
+        # Typed elements and corner fiducials place the still. Untyped ORB/SIFT
+        # is not the lock that decides the pose.
+        # Preview tracking stays cheap: no element separation here.
+        typed = None
         self._track_ms = (time.perf_counter() - started) * 1000.0
         self._lock_residual = float(estimate.residual)
         self._track_note = ""
         self._ref_to_frame = None
-        width = int(frame.shape[1])
-        height = int(frame.shape[0])
-        if estimate.status == "uncertain":
+        ref_to_frame = None
+        hits = int(estimate.hits)
+        confidence = float(estimate.precision)
+        if typed is not None:
+            ref_to_frame = np.asarray(typed["ref_to_frame"], dtype=np.float64)
+            self._lock_residual = float(typed["residual"])
+            hits = int(typed.get("hits", hits))
+            confidence = float(typed.get("ncc", confidence))
+        elif estimate.status == "ok" and not alignment_rejected(estimate.matrix):
+            ref_to_frame = np.asarray(estimate.matrix, dtype=np.float64)
+            self._lock_residual = float(estimate.residual)
+        elif estimate.status == "uncertain":
             self._pose = None
             self._track_note = _UNCERTAIN
             return
-        if not estimate.ok:
+        if ref_to_frame is None:
             self._pose = None
             return
-        ref_to_frame = np.asarray(estimate.matrix, dtype=np.float64)
         anchor, anchor_to_frame = self._select_anchor(ref_to_frame, width, height)
         if anchor is None or anchor_to_frame is None or alignment_rejected(anchor_to_frame):
             self._pose = None
@@ -499,15 +547,15 @@ class StableCaptureSession:
         self._anchor_id = anchor.tile_id
         self._pose = Pose2D(
             M=np.asarray(anchor_to_frame, dtype=np.float64),
-            inliers=int(estimate.hits),
-            confidence=float(estimate.precision),
+            inliers=hits,
+            confidence=confidence,
             ok=True,
             message="ok",
             elapsed_ms=float(self._track_ms),
             scale=float(np.linalg.norm(np.asarray(anchor_to_frame)[:, 0])),
             angle_deg=pose_angle_deg(anchor_to_frame),
             query_points=int(len(query_xy)),
-            pose_error_px=float(estimate.residual),
+            pose_error_px=float(self._lock_residual),
         )
         self._quads = [
             project_tile_quad(_compose_m(ref_to_frame, tile.M_to_ref), tile.width, tile.height) for tile in self.tiles
@@ -529,8 +577,6 @@ class StableCaptureSession:
             width,
             height,
         )
-        if previous_fraction >= self.min_overlap:
-            return previous, previous_matrix
         for tile in self.tiles:
             matrix = _compose_m(ref_to_frame, tile.M_to_ref)
             fraction = frame_overlap_ratio(project_tile_quad(matrix, tile.width, tile.height), width, height)
@@ -538,9 +584,223 @@ class StableCaptureSession:
                 best = tile
                 best_fraction = fraction
                 best_matrix = matrix
+        # Filename order is only a hint. Prefer the previous tile when it still
+        # overlaps about as well as the best match; otherwise use the best one.
+        if previous_fraction >= self.min_overlap and previous_fraction + 0.05 >= best_fraction:
+            return previous, previous_matrix
         return best, best_matrix
 
+    def _feature_lock(self, frame: np.ndarray, width: int, height: int) -> dict | None:
+        """ORB+CLAHE pose against accepted stills, ranked by overlap NCC."""
+        if not self.tiles:
+            return None
+        query_pack = extract_feature_pack(frame)
+        hypotheses = []
+        for tile in self._feature_anchor_tiles():
+            pose = estimate_feature_pose(
+                tile.raw,
+                frame,
+                library_pack=getattr(tile, "feature_pack", None),
+                query_pack=query_pack,
+            )
+            if not pose.ok or alignment_rejected(pose.matrix):
+                continue
+            ref_to_frame = _compose_m(np.asarray(pose.matrix, dtype=np.float64), _invert_m(tile.M_to_ref))
+            item = {
+                "tile": tile,
+                "pose": pose,
+                "ref_to_frame": ref_to_frame,
+                "ncc": float(pose.ncc),
+                "residual": float(pose.residual),
+                "hits": int(pose.hits),
+                "area": int(pose.area),
+            }
+            hypotheses.append(item)
+        if not hypotheses:
+            return None
+        hypotheses.sort(key=lambda item: (item["ncc"], item["hits"]), reverse=True)
+        best = hypotheses[0]
+        # Two equally good, disagreeing feature poses are not a unique lock.
+        sample = tile_corners(width, height)
+        for other in hypotheses[1:]:
+            close = other["ncc"] >= 0.50 and (best["ncc"] - other["ncc"]) <= 0.08
+            if close and not _poses_consistent(best["ref_to_frame"], other["ref_to_frame"], sample):
+                return None
+        return best
+
+    def _feature_anchor_tiles(self) -> list[_Tile]:
+        """Every accepted still. A frame may belong next to an earlier tile, not the last one."""
+        tiles = [tile for tile in self.tiles if tile.raw is not None]
+        return list(reversed(tiles))
+
+    def _feature_breaks_ambiguity(self, feature: dict) -> bool:
+        """Only unique texture may override a constellation that looks like a lattice."""
+        return float(feature.get("ncc", 0.0)) >= 0.60 and int(feature.get("hits", 0)) >= 16
+
+    def _place_accepted_still(self, frame: np.ndarray, query_elements, query_fiducials) -> dict | None:
+        """Choose a unique board-frame pose for this still.
+
+        Typed marks and fiducials place the shot. A periodic lattice never
+        does. Untyped ORB is not the placement authority.
+        """
+        return self._typed_lock(frame, query_elements, query_fiducials)
+
+    def _typed_lock(self, frame: np.ndarray, query_elements, query_fiducials) -> dict | None:
+        """Place this frame into the board frame by typed marks, not untyped keypoints."""
+        if not self.tiles or query_elements is None or not getattr(query_elements, "elements", None):
+            return None
+        width = int(frame.shape[1])
+        height = int(frame.shape[0])
+        hypotheses = []
+        for tile in self._typed_anchor_tiles(query_elements, query_fiducials):
+            reference = getattr(tile, "elements", None)
+            if (reference is None or not getattr(reference, "elements", None)) and tile.raw is not None:
+                reference = extract_board_elements(tile.raw, max_long_edge=self.extractor.max_long_edge)
+                tile.elements = reference
+            if reference is None or not getattr(reference, "elements", None):
+                continue
+            result = estimate_typed_pose(
+                reference,
+                query_elements,
+                reference_fiducials=getattr(tile, "fiducials", None),
+                query_fiducials=query_fiducials,
+            )
+            if result.matrix is None or alignment_rejected(result.matrix):
+                continue
+            if result.status == "lattice_only":
+                continue
+            if result.status not in {"ok", "disagree"}:
+                continue
+            matrix = np.asarray(result.matrix, dtype=np.float64)
+            overlap = frame_overlap_ratio(project_tile_quad(matrix, tile.width, tile.height), width, height)
+            if overlap < self.min_overlap:
+                continue
+            ncc, area = masked_ncc(tile.raw, frame, matrix) if tile.raw is not None else (0.0, 0)
+            if result.status == "disagree" and not self._typed_disagreement_is_flaky(result, ncc):
+                continue
+            landmarks = unique_landmark_support(
+                reference,
+                query_elements,
+                reference_fiducials=getattr(tile, "fiducials", None),
+                query_fiducials=query_fiducials,
+            )
+            # Only marks that sit on this pose may relax the photometric check.
+            # Shared-looking glyphs elsewhere must not excuse a false pad lock.
+            unique = result.secondary_hits >= 1 or (
+                result.status == "ok"
+                and query_fiducials
+                and getattr(tile, "fiducials", None)
+            )
+            if unique:
+                # Microscope lighting often weakens NCC when silkscreen or
+                # fiducials already agree.
+                if result.status != "ok" and ncc < 0.22:
+                    continue
+            else:
+                # Pad/via-only locks must be tight and photometrically strong
+                # so a lookalike period is not accepted as a unique pose.
+                frame_area = float(max(1, width * height))
+                if ncc < 0.55 or result.residual > 2.0 or area < 0.08 * frame_area:
+                    continue
+                if result.primary_hits < 8 and ncc < 0.85:
+                    continue
+            hypotheses.append(
+                {
+                    "tile": tile,
+                    "result": result,
+                    "ref_to_frame": _compose_m(matrix, _invert_m(tile.M_to_ref)),
+                    "ncc": float(ncc),
+                    "residual": float(result.residual),
+                    "hits": int(result.primary_hits + result.secondary_hits),
+                    "area": int(area),
+                    "overlap": float(overlap),
+                    "landmarks": int(landmarks),
+                }
+            )
+        if not hypotheses:
+            return None
+        hypotheses.sort(
+            key=lambda item: (item["result"].status == "ok", item["ncc"], item["hits"], item["landmarks"], -item["residual"]),
+            reverse=True,
+        )
+        best = hypotheses[0]
+        sample = tile_corners(width, height)
+        for other in hypotheses[1:]:
+            if _poses_consistent(best["ref_to_frame"], other["ref_to_frame"], sample):
+                continue
+            unique_best = best["result"].secondary_hits >= 1 or best["landmarks"] >= 2
+            unique_other = other["result"].secondary_hits >= 1 or other["landmarks"] >= 2
+            if unique_best and not unique_other:
+                continue
+            ncc_close = other["ncc"] >= 0.50 and (best["ncc"] - other["ncc"]) <= 0.08
+            typed_close = (
+                other["result"].status == "ok"
+                and best["result"].status == "ok"
+                and other["hits"] >= best["hits"] - 1
+                and abs(other["residual"] - best["residual"]) <= 0.8
+                and other["ncc"] >= 0.35
+            )
+            # Two equally good, disagreeing placements are not a unique lock.
+            if ncc_close or typed_close:
+                return None
+        return best
+
+    def _typed_disagreement_is_flaky(self, verdict, ncc: float) -> bool:
+        if ncc < 0.55 or float(getattr(verdict, "residual", 99.0)) > 2.5:
+            return False
+        message = str(getattr(verdict, "message", "") or "")
+        if "primary seam disagrees" in message:
+            return ncc >= 0.60 and float(verdict.residual) <= 2.0
+        if "secondary seam disagrees:" not in message:
+            return False
+        kinds = {item.strip() for item in message.split(":", 1)[-1].split(",") if item.strip()}
+        if not kinds or kinds - {"outline", "trace", "text"}:
+            return False
+        if "text" in kinds and _coherent_text_shift(verdict):
+            return False
+        return True
+
+    def _typed_anchor_tiles(self, query_elements, query_fiducials) -> list[_Tile]:
+        """Prefer unique-landmark neighbors; still search earlier tiles for out-of-order shots."""
+        usable = []
+        for tile in self.tiles:
+            if tile.raw is None:
+                continue
+            usable.append(tile)
+        if len(usable) <= 12:
+            return list(reversed(usable))
+        recent = list(reversed(usable[-8:]))
+        ranked = []
+        for tile in usable:
+            score = unique_landmark_support(
+                getattr(tile, "elements", None),
+                query_elements,
+                reference_fiducials=getattr(tile, "fiducials", None),
+                query_fiducials=query_fiducials,
+            )
+            ranked.append((score, tile))
+        ranked.sort(key=lambda item: item[0], reverse=True)
+        chosen: list[_Tile] = []
+        seen: set[int] = set()
+        for tile in recent:
+            marker = id(tile)
+            if marker not in seen:
+                seen.add(marker)
+                chosen.append(tile)
+        for score, tile in ranked:
+            if score <= 0:
+                continue
+            marker = id(tile)
+            if marker in seen:
+                continue
+            seen.add(marker)
+            chosen.append(tile)
+            if len(chosen) >= 16:
+                break
+        return chosen
+
     def _stack_cloud(self, points: np.ndarray, landmarks: np.ndarray | None, transform: np.ndarray | None = None):
+
         chunks: list[np.ndarray] = []
         weights: list[np.ndarray] = []
         xy = np.asarray(points, dtype=np.float64).reshape(-1, 2) if points is not None and len(points) else np.zeros((0, 2))
@@ -718,6 +978,8 @@ class StableCaptureSession:
             align_residual_px=0.0 if parent is None else float(self._lock_residual),
             sharpness=frame_sharpness(frame),
             elements=elements if elements is not None else extract_board_elements(frame, max_long_edge=self.extractor.max_long_edge),
+            feature_pack=extract_feature_pack(frame),
+            fiducials=detect_fiducials(frame),
         )
         if parent is None or pose_m is None:
             tile.M_to_ref = _identity_m()
@@ -1145,32 +1407,83 @@ class StableCaptureSession:
             self._grow_overview(updated, settled)
         self._blend_overview_tile(tile)
 
+    def _pair_constraint(self, earlier: _Tile, later: _Tile):
+        """Typed or fiducial correspondences between two overlapping tiles."""
+        typed = None
+        if getattr(earlier, "elements", None) is not None and getattr(later, "elements", None) is not None:
+            typed = estimate_typed_pose(
+                earlier.elements,
+                later.elements,
+                reference_fiducials=getattr(earlier, "fiducials", None),
+                query_fiducials=getattr(later, "fiducials", None),
+            )
+        if typed is not None and typed.status == "ok" and typed.residual <= 3.2:
+            src_xy, dst_xy = typed_correspondences(earlier.elements, later.elements, typed.matrix)
+            fid_src, fid_dst = fiducial_correspondences(
+                getattr(earlier, "fiducials", None),
+                getattr(later, "fiducials", None),
+                typed.matrix,
+            )
+            if len(fid_src):
+                src_xy = np.vstack([src_xy, fid_src]) if len(src_xy) else fid_src
+                dst_xy = np.vstack([dst_xy, fid_dst]) if len(dst_xy) else fid_dst
+            if len(src_xy) >= 4:
+                return src_xy, dst_xy
+        if typed is not None and typed.status == "ok" and getattr(earlier, "fiducials", None) and getattr(later, "fiducials", None):
+            fid_src, fid_dst = fiducial_correspondences(
+                earlier.fiducials,
+                later.fiducials,
+                typed.matrix,
+            )
+            if len(fid_src) >= 2:
+                return fid_src, fid_dst
+        # Untyped pad clouds are only used when the field is not a periodic lattice.
+        library_xy, library_w = self._stack_cloud(_tile_xy(earlier), getattr(earlier, "landmarks", None))
+        frame_xy, frame_w = self._stack_cloud(_tile_xy(later), getattr(later, "landmarks", None))
+        if len(library_xy) < 4 or len(frame_xy) < 4 or is_periodic_lattice(library_xy):
+            return None
+        estimate = estimate_similarity_pose(
+            library_xy,
+            frame_xy,
+            later.width,
+            later.height,
+            library_w=library_w,
+            query_w=frame_w,
+        )
+        if not estimate.ok or len(estimate.src_xy) < 4:
+            return None
+        return estimate.src_xy, estimate.dst_xy
+
     def _close_loops(self, tile: _Tile) -> None:
-        """Match this shot to every overlapping earlier tile and refine one board frame."""
+        """Match overlapping tiles by typed marks and refine one board frame."""
         if len(self.tiles) < 2:
-            return
-        frame_xy, frame_w = self._stack_cloud(_tile_xy(tile), getattr(tile, "landmarks", None))
-        if len(frame_xy) < 4:
             return
         constraints: list[tuple] = []
         matched: list[_Tile] = []
-        for index, earlier in enumerate(self.tiles[:-1]):
-            library_xy, library_w = self._stack_cloud(_tile_xy(earlier), getattr(earlier, "landmarks", None))
-            if len(library_xy) < 4:
-                continue
-            estimate = estimate_similarity_pose(
-                library_xy,
-                frame_xy,
-                tile.width,
-                tile.height,
-                library_w=library_w,
-                query_w=frame_w,
-            )
-            if not estimate.ok or len(estimate.src_xy) < 4:
-                continue
-            constraints.append((index, len(self.tiles) - 1, estimate.src_xy, estimate.dst_xy))
-            matched.append(earlier)
+        new_index = len(self.tiles) - 1
+        for earlier_index, earlier in enumerate(self.tiles[:-1]):
+            for later_index, later in enumerate(self.tiles[earlier_index + 1 :], start=earlier_index + 1):
+                if not self._tiles_may_overlap(earlier, later):
+                    continue
+                # On a long chain, only the new tile and fiducial pairs are revisited.
+                if later_index != new_index and len(self.tiles) > 12:
+                    if not (getattr(earlier, "fiducials", None) and getattr(later, "fiducials", None)):
+                        continue
+                pair = self._pair_constraint(earlier, later)
+                if pair is None:
+                    continue
+                src_xy, dst_xy = pair
+                constraints.append((earlier_index, later_index, src_xy, dst_xy))
+                if later_index == new_index:
+                    matched.append(earlier)
         if not constraints:
+            # Shared fiducials can still pull a drifted tile even without a new pair.
+            pinned = self._pin_shared_landmarks()
+            if pinned:
+                self._rebuild_coverage_memory()
+                self._pose_after_capture(tile)
+                self._rebuild_color_overview()
+                self.overview_refine_count += 1
             return
         solved = refine_pose_graph(
             [np.asarray(item.M_to_ref, dtype=np.float64) for item in self.tiles],
@@ -1193,9 +1506,19 @@ class StableCaptureSession:
         self._refresh_annotations()
         self._rebuild_coverage_memory()
         self._pose_after_capture(tile)
-        if moved:
+        pinned = self._pin_shared_landmarks()
+        if moved or pinned:
             self._rebuild_color_overview()
             self.overview_refine_count += 1
+
+    def _tiles_may_overlap(self, left: _Tile, right: _Tile, min_ratio: float = 0.06) -> bool:
+        quad_a = project_tile_quad(left.M_to_ref, left.width, left.height).astype(np.float32)
+        quad_b = project_tile_quad(right.M_to_ref, right.width, right.height).astype(np.float32)
+        area, _intersection = cv2.intersectConvexConvex(quad_a, quad_b)
+        if area is None:
+            return False
+        denom = float(max(1, min(left.width * left.height, right.width * right.height)))
+        return float(max(0.0, area)) / denom >= min_ratio
 
     def _rewrite_edge_pose(self, edge: dict, tile: _Tile) -> None:
         source = next(item for item in self.tiles if item.tile_id == edge["src"])
@@ -1223,6 +1546,72 @@ class StableCaptureSession:
                 "direction": "loop_closure",
             }
         )
+
+    def _pin_shared_landmarks(self) -> bool:
+        """Pull the same fiducial or distinctive mark toward one board point.
+
+        The four corner fiducials, once seen, define the board frame. A small
+        residual is treated as drift, not as a new correspondence.
+        """
+        clusters = self._landmark_clusters()
+        if not clusters:
+            return False
+        moved = False
+        for cluster in clusters:
+            if len(cluster) < 2:
+                continue
+            target = np.mean(np.vstack([item[2] for item in cluster]), axis=0)
+            for tile, _local, board_xy in cluster:
+                if tile is self.tiles[0]:
+                    continue
+                delta = target - board_xy
+                distance = float(np.hypot(delta[0], delta[1]))
+                if distance < 0.35 or distance > 18.0:
+                    continue
+                tile.M_to_ref = np.asarray(tile.M_to_ref, dtype=np.float64).copy()
+                tile.M_to_ref[0, 2] += float(delta[0])
+                tile.M_to_ref[1, 2] += float(delta[1])
+                tile.M_overview = tile.M_to_ref.copy()
+                moved = True
+        return moved
+
+    def _landmark_clusters(self) -> list[list[tuple]]:
+        """Group fiducials and distinctive text that land on the same board point."""
+        observations: list[tuple] = []
+        for tile in self.tiles:
+            for fiducial in getattr(tile, "fiducials", None) or []:
+                local = np.asarray(fiducial["xy"], dtype=np.float64)
+                board = _apply_m(tile.M_to_ref, local.reshape(1, 2))[0]
+                observations.append((tile, "fiducial", board, float(fiducial.get("radius", 0.0)), local))
+            elements = getattr(tile, "elements", None)
+            if elements is None:
+                continue
+            for element in elements.of_kind("text"):
+                if element.partial or element.area < 30.0:
+                    continue
+                local = np.asarray(element.centroid, dtype=np.float64)
+                board = _apply_m(tile.M_to_ref, local.reshape(1, 2))[0]
+                observations.append((tile, "text", board, float(element.area), local))
+        clusters: list[list[tuple]] = []
+        used = [False] * len(observations)
+        for index, item in enumerate(observations):
+            if used[index]:
+                continue
+            used[index] = True
+            group = [(item[0], item[4], item[2])]
+            for other_index, other in enumerate(observations):
+                if used[other_index] or other[1] != item[1]:
+                    continue
+                limit = 18.0 if item[1] == "fiducial" else 10.0
+                if float(np.hypot(item[2][0] - other[2][0], item[2][1] - other[2][1])) > limit:
+                    continue
+                if item[1] == "fiducial" and abs(item[3] - other[3]) / max(item[3], other[3], 1.0) > 0.35:
+                    continue
+                used[other_index] = True
+                group.append((other[0], other[4], other[2]))
+            if len(group) >= 2:
+                clusters.append(group)
+        return clusters
 
     def _rebuild_coverage_memory(self) -> None:
         memory = None
@@ -1302,13 +1691,83 @@ class StableCaptureSession:
             board = _apply_m(tile.M_to_ref, np.array([local], dtype=np.float64))[0]
             item["xy"] = [round(float(board[0]), 2), round(float(board[1]), 2)]
 
-    def _check_red_elements(self, frame: np.ndarray, anchor: _Tile, pose_m: np.ndarray):
+    def _ignore_flaky_secondary(self, anchor: _Tile, frame: np.ndarray, verdict) -> bool:
+        """Noisy extraction on a strong photometric lock is not a real seam error.
+
+        A coherent silkscreen shift (several same-letter pairs at one offset)
+        is still rejected. Random leftover text or pad blobs are not.
+        """
+        if self._pose is None or not getattr(self._pose, "ok", False):
+            return False
+        ncc, _area = masked_ncc(anchor.raw, frame, np.asarray(self._pose.M, dtype=np.float64))
+        if ncc < 0.55 or float(self._lock_residual) > 2.5:
+            return False
+        message = str(getattr(verdict, "message", "") or "")
+        if "primary seam disagrees" in message:
+            return ncc >= 0.60 and float(self._lock_residual) <= 2.0
+        if "secondary seam disagrees:" not in message:
+            return False
+        kinds = {item.strip() for item in message.split(":", 1)[-1].split(",") if item.strip()}
+        if not kinds:
+            return False
+        if kinds - {"outline", "trace", "text"}:
+            return False
+        if "text" in kinds and _coherent_text_shift(verdict):
+            return False
+        return True
+
+    def _install_typed_pose(self, frame: np.ndarray, typed: dict) -> None:
+        """Commit a typed lock so capture can write the tile into the board frame."""
+        width = int(frame.shape[1])
+        height = int(frame.shape[0])
+        ref_to_frame = np.asarray(typed["ref_to_frame"], dtype=np.float64)
+        self._lock_residual = float(typed["residual"])
+        anchor, anchor_to_frame = self._select_anchor(ref_to_frame, width, height)
+        if anchor is None or anchor_to_frame is None or alignment_rejected(anchor_to_frame):
+            # Fall back to the tile that produced the typed or unique-feature match.
+            anchor = typed.get("tile")
+            if anchor is None:
+                return
+            result = typed.get("result")
+            pose = typed.get("pose")
+            if result is not None and getattr(result, "matrix", None) is not None:
+                anchor_to_frame = np.asarray(result.matrix, dtype=np.float64)
+            elif pose is not None and getattr(pose, "matrix", None) is not None:
+                anchor_to_frame = np.asarray(pose.matrix, dtype=np.float64)
+            else:
+                return
+        self.matcher.set_topology(anchor.extracted)
+        self._ref_to_frame = ref_to_frame
+        self._anchor_id = anchor.tile_id
+        self._pose = Pose2D(
+            M=np.asarray(anchor_to_frame, dtype=np.float64),
+            inliers=int(typed.get("hits", 0)),
+            confidence=float(typed.get("ncc", 0.0)),
+            ok=True,
+            message="ok",
+            elapsed_ms=float(self._track_ms or 0.0),
+            scale=float(np.linalg.norm(np.asarray(anchor_to_frame)[:, 0])),
+            angle_deg=pose_angle_deg(anchor_to_frame),
+            query_points=0,
+            pose_error_px=float(self._lock_residual),
+        )
+        self._quads = [
+            project_tile_quad(_compose_m(ref_to_frame, tile.M_to_ref), tile.width, tile.height) for tile in self.tiles
+        ]
+        self._quads = self._filter_quads_by_coverage_memory(self._quads, ref_to_frame, width, height)
+        self._polygon = self._quads[-1] if self._quads else None
+        self._overlap = union_overlap_ratio(self._quads, width, height)
+        self._tracked = True
+        self._track_note = ""
+
+    def _check_red_elements(self, frame: np.ndarray, anchor: _Tile, pose_m: np.ndarray, query_elements=None):
+
         """Separate this still and compare it to the anchor inside the red overlap.
 
         Preview tracking does not call this. A lattice, or a seam whose text,
         outline, or traces miss the locked pose, rejects the shot.
         """
-        query = extract_board_elements(frame, max_long_edge=self.extractor.max_long_edge)
+        query = query_elements if query_elements is not None else extract_board_elements(frame, max_long_edge=self.extractor.max_long_edge)
         reference = getattr(anchor, "elements", None)
         if reference is None or not getattr(reference, "elements", None) or not query.elements:
             self.element_alignment = None
@@ -1325,7 +1784,17 @@ class StableCaptureSession:
         return CaptureDecision(False, reason, overlap=overlap, elapsed_ms=elapsed_ms)
 
 
+def _coherent_text_shift(verdict) -> bool:
+    """True when several tight text pairs share one offset, as in a moved silkscreen."""
+    offsets = getattr(verdict, "shift_offsets", None) or getattr(verdict, "conflict_offsets", None) or {}
+    values = [float(item) for item in offsets.get("text", []) if 6.0 <= float(item) <= 80.0]
+    if len(values) < 2:
+        return False
+    return (max(values) - min(values)) <= 14.0
+
+
 def frame_sharpness(frame: np.ndarray) -> float:
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if frame.ndim == 3 else frame
     if gray.size == 0:
         return 0.0

@@ -290,3 +290,52 @@ def test_classifier_hook_relabels_crops_without_weights():
     assert elements.of_kind("pin")
     plain = extract_board_elements(_rich_board())
     assert plain.of_kind("pad")
+
+
+
+def _paint_fiducial(image, xy, radius=36):
+    center = (int(xy[0]), int(xy[1]))
+    cv2.circle(image, center, int(radius), (40, 180, 220), -1)
+    cv2.circle(image, center, max(4, int(radius * 0.32)), (18, 18, 18), -1)
+
+
+def test_fiducial_pairs_recover_a_rotated_pose():
+    from vision.elements import detect_fiducials, fiducial_correspondences, _fiducial_votes
+
+    image = np.full((360, 520, 3), (40, 140, 60), np.uint8)
+    _paint_fiducial(image, (120, 110), 36)
+    _paint_fiducial(image, (380, 250), 38)
+    first = detect_fiducials(image)
+    assert len(first) == 2
+    center = ((image.shape[1] - 1) / 2.0, (image.shape[0] - 1) / 2.0)
+    spin = cv2.getRotationMatrix2D(center, 7.0, 1.0)
+    rotated = cv2.warpAffine(
+        image,
+        spin,
+        (image.shape[1], image.shape[0]),
+        flags=cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=(40, 140, 60),
+    )
+    second = detect_fiducials(rotated)
+    assert len(second) == 2
+    votes = _fiducial_votes(first, second)
+    assert votes
+
+    def _angle(matrix):
+        return float(np.degrees(np.arctan2(matrix[1, 0], matrix[0, 0])))
+
+    assert any(abs(_angle(matrix) + 7.0) < 2.5 for matrix in votes)
+    src, dst = fiducial_correspondences(first, second, spin)
+    assert len(src) == 2
+    assert len(dst) == 2
+
+
+def test_detect_fiducials_ignores_ordinary_pads():
+    from vision.elements import detect_fiducials
+
+    image = np.full((240, 320, 3), (40, 140, 60), np.uint8)
+    for x in range(30, 300, 24):
+        cv2.circle(image, (x, 80), 5, (40, 180, 220), -1)
+        cv2.circle(image, (x, 80), 2, (18, 18, 18), -1)
+    assert detect_fiducials(image) == []

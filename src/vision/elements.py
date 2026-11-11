@@ -65,6 +65,8 @@ PRIMARY_KINDS = (KIND_HOLE, KIND_PAD, KIND_PIN)
 SECONDARY_KINDS = (KIND_TEXT, KIND_OUTLINE, KIND_TRACE)
 # Both tiles must show at least this many interior instances before the family can veto.
 _SECONDARY_MIN = {KIND_TEXT: 1, KIND_OUTLINE: 1, KIND_TRACE: 1}
+_SECONDARY_DESC_MAX = 0.75
+_SECONDARY_PAIR_PX = 80.0
 _KIND_CAP = {
     KIND_HOLE: 48,
     KIND_PAD: 48,
@@ -156,6 +158,8 @@ class AlignmentResult:
     secondary_hits: int = 0
     hits_by_kind: dict = field(default_factory=dict)
     snapped: list = field(default_factory=list)
+    conflict_offsets: dict = field(default_factory=dict)
+    shift_offsets: dict = field(default_factory=dict)
     message: str = ""
 
     @property
@@ -264,7 +268,268 @@ def align_red_region(
     return _align_global(reference, query, accept_residual_px, conflict_residual_px)
 
 
+def detect_fiducials(image: np.ndarray) -> list[dict]:
+    """Copper-ring corner marks with a drilled hole. Ordinary pads and caps are ignored."""
+    if not isinstance(image, np.ndarray) or image.size == 0:
+        return []
+    color = image if image.ndim == 3 else cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+    height, width = color.shape[:2]
+    min_radius = max(22.0, 0.05 * float(min(height, width)))
+    hsv = cv2.cvtColor(color, cv2.COLOR_BGR2HSV)
+    gold = cv2.inRange(hsv, (8, 25, 80), (40, 255, 255))
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
+    gold = cv2.morphologyEx(gold, cv2.MORPH_CLOSE, kernel, iterations=2)
+    contours, hierarchy = cv2.findContours(gold, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    if hierarchy is None or not len(contours):
+        return []
+    gray = cv2.cvtColor(color, cv2.COLOR_BGR2GRAY)
+    hierarchy = hierarchy[0]
+    found: list[dict] = []
+    for index, contour in enumerate(contours):
+        area = float(cv2.contourArea(contour))
+        if area < math.pi * (min_radius * 0.5) ** 2:
+            continue
+        (center_x, center_y), radius = cv2.minEnclosingCircle(contour)
+        if radius < min_radius or radius > 0.5 * min(height, width):
+            continue
+        perimeter = cv2.arcLength(contour, True)
+        circularity = 0.0 if perimeter < 1.0 else float(4.0 * math.pi * area / (perimeter * perimeter))
+        fill = float(area / max(1.0, math.pi * radius * radius))
+        has_hole = int(hierarchy[index][2]) != -1
+        yy, xx = np.ogrid[:height, :width]
+        dist = np.sqrt((xx - center_x) ** 2 + (yy - center_y) ** 2)
+        inner = dist <= radius * 0.40
+        ring = (dist <= radius * 1.05) & (dist >= radius * 0.55)
+        if int(inner.sum()) < 25 or int(ring.sum()) < 50:
+            continue
+        inner_v = float(gray[inner].mean())
+        ring_v = float(gray[ring].mean())
+        ring_gold = float(gold[ring].mean())
+        inner_gold = float(gold[inner].mean())
+        if ring_gold < 40.0:
+            continue
+        if circularity < 0.65 or not has_hole:
+            continue
+        contrast = ring_v - inner_v
+        gold_contrast = ring_gold - inner_gold
+        if contrast < 8.0 and gold_contrast < 30.0:
+            continue
+        score = float(contrast + 0.3 * gold_contrast + 40.0 * min(circularity, 1.0) + 15.0)
+        if score < 50.0:
+            continue
+        found.append(
+            {
+                "xy": (float(center_x), float(center_y)),
+                "radius": float(radius),
+                "score": score,
+                "circularity": float(circularity),
+            }
+        )
+    found.sort(key=lambda item: -item["score"])
+    kept: list[dict] = []
+    for item in found:
+        if any(
+            math.hypot(item["xy"][0] - other["xy"][0], item["xy"][1] - other["xy"][1])
+            < 0.6 * (item["radius"] + other["radius"])
+            for other in kept
+        ):
+            continue
+        kept.append(item)
+    return kept[:4]
+
+
+def estimate_typed_pose(reference: BoardElementSet, query: BoardElementSet, *, reference_fiducials=None, query_fiducials=None) -> AlignmentResult:
+    """Similarity from typed elements and corner fiducials. Does not snap partial outlines.
+
+    A via/pad lattice alone is not unique; callers should treat ``lattice_only``
+    as uncertain. Disagreement is not rewritten into an ok pose.
+    """
+    if reference is None or query is None or not reference.elements or not query.elements:
+        return AlignmentResult("lost", _identity(), message="no elements")
+    candidates = _vote_similarities(reference, query)
+    for matrix in _fiducial_votes(reference_fiducials, query_fiducials):
+        if all(not _pose_close(matrix, other, translation_px=8.0, angle_deg=3.0) for other in candidates):
+            candidates.append(matrix)
+    if not candidates:
+        return AlignmentResult("lost", _identity(), message="no typed candidate")
+    scored: list[AlignmentResult] = []
+    for matrix in candidates:
+        refined = _refine_similarity_from_matches(reference, query, matrix, ACCEPT_RESIDUAL_PX)
+        chosen = refined if refined is not None else matrix
+        scored.append(_evaluate(reference, query, chosen, ACCEPT_RESIDUAL_PX, CONFLICT_RESIDUAL_PX, snapped=[]))
+    ok = [item for item in scored if item.status == "ok"]
+    if ok:
+        ok.sort(key=lambda item: (item.secondary_hits, item.primary_hits, -item.residual), reverse=True)
+        return ok[0]
+    lattices = [item for item in scored if item.status == "lattice_only"]
+    if lattices:
+        lattices.sort(key=lambda item: (item.primary_hits, -item.residual), reverse=True)
+        return lattices[0]
+    disagreements = [item for item in scored if item.status == "disagree"]
+    if disagreements:
+        disagreements.sort(key=lambda item: (-item.residual, item.primary_hits), reverse=True)
+        best = disagreements[0]
+        # Keep a geometrically tight disagreeing pose; a random far vote is lost.
+        if best.residual <= CONFLICT_RESIDUAL_PX and best.primary_hits >= MIN_PRIMARY_HITS:
+            return best
+        return AlignmentResult("lost", best.matrix, residual=best.residual, message=best.message)
+    return AlignmentResult("lost", scored[0].matrix, message="weak element support")
+
+
+def typed_correspondences(reference: BoardElementSet, query: BoardElementSet, matrix: np.ndarray, *, accept_px: float = ACCEPT_RESIDUAL_PX) -> tuple[np.ndarray, np.ndarray]:
+    """Same-kind pairs that sit on this pose, for a later pose-graph constraint."""
+    src: list[np.ndarray] = []
+    dst: list[np.ndarray] = []
+    try:
+        inverse = _invert(matrix)
+    except np.linalg.LinAlgError:
+        return np.zeros((0, 2), dtype=np.float64), np.zeros((0, 2), dtype=np.float64)
+    for element in reference.elements:
+        if element.partial or element.kind not in PRIMARY_KINDS + SECONDARY_KINDS:
+            continue
+        if not _inside(matrix, element.centroid, query.width, query.height):
+            continue
+        pool = [
+            other
+            for other in query.elements
+            if other.kind == element.kind and _inside(inverse, other.centroid, reference.width, reference.height)
+        ]
+        if element.kind in SECONDARY_KINDS:
+            pool = _secondary_partners(element, pool, matrix)
+        else:
+            pool = [other for other in pool if _descriptor_compatible(element, other)]
+        if not pool:
+            continue
+        nearest = min(pool, key=lambda other: _centroid_distance(element, other, matrix))
+        distance = _centroid_distance(element, nearest, matrix)
+        if distance > max(6.0, accept_px + 2.0):
+            continue
+        src.append(np.asarray(element.centroid, dtype=np.float64))
+        dst.append(np.asarray(nearest.centroid, dtype=np.float64))
+    if not src:
+        return np.zeros((0, 2), dtype=np.float64), np.zeros((0, 2), dtype=np.float64)
+    return np.vstack(src), np.vstack(dst)
+
+
+def unique_landmark_support(reference: BoardElementSet, query: BoardElementSet, *, reference_fiducials=None, query_fiducials=None) -> int:
+    """How many distinctive marks could possibly be the same object in both views."""
+    score = 0
+    if reference_fiducials and query_fiducials:
+        score += 5 * len(_fiducial_votes(reference_fiducials, query_fiducials))
+    if reference is None or query is None:
+        return score
+    kinds = (KIND_TEXT, KIND_OUTLINE, KIND_PIN, KIND_COLOR)
+    weights = {KIND_TEXT: 2, KIND_OUTLINE: 2, KIND_PIN: 2, KIND_COLOR: 1}
+    for kind in kinds:
+        refs = [element for element in reference.of_kind(kind) if not element.partial][:24]
+        queries = [element for element in query.of_kind(kind) if not element.partial][:24]
+        hits = 0
+        for element in refs:
+            if any(_descriptor_compatible(element, other) for other in queries):
+                hits += 1
+        score += hits * weights[kind]
+    return int(score)
+
+
+def fiducial_correspondences(reference_fiducials, query_fiducials, matrix: np.ndarray, *, accept_px: float = 6.0) -> tuple[np.ndarray, np.ndarray]:
+    """Same-mark pairs that sit on this pose, for the board-frame pose graph."""
+    src: list[np.ndarray] = []
+    dst: list[np.ndarray] = []
+    matrix = np.asarray(matrix, dtype=np.float64)
+    for left in list(reference_fiducials or []):
+        partners = [right for right in list(query_fiducials or []) if _fiducial_compatible(left, right)]
+        if not partners:
+            continue
+        mapped = _apply(matrix, np.asarray(left.get("xy"), dtype=np.float64).reshape(1, 2))[0]
+        nearest = min(
+            partners,
+            key=lambda right: math.hypot(
+                mapped[0] - float(np.asarray(right.get("xy"), dtype=np.float64).reshape(2)[0]),
+                mapped[1] - float(np.asarray(right.get("xy"), dtype=np.float64).reshape(2)[1]),
+            ),
+        )
+        point = np.asarray(nearest.get("xy"), dtype=np.float64).reshape(2)
+        if math.hypot(mapped[0] - point[0], mapped[1] - point[1]) > accept_px:
+            continue
+        src.append(np.asarray(left.get("xy"), dtype=np.float64).reshape(2))
+        dst.append(point)
+    if not src:
+        return np.zeros((0, 2), dtype=np.float64), np.zeros((0, 2), dtype=np.float64)
+    return np.vstack(src), np.vstack(dst)
+
+
+def _fiducial_compatible(left, right) -> bool:
+    radius_l = float(left.get("radius", 0.0))
+    radius_r = float(right.get("radius", 0.0))
+    if radius_l < 1.0 or radius_r < 1.0:
+        return False
+    return abs(radius_l - radius_r) / max(radius_l, radius_r, 1.0) <= 0.30
+
+
+def _similarity_from_two_points(src: np.ndarray, dst: np.ndarray) -> np.ndarray | None:
+    src = np.asarray(src, dtype=np.float64).reshape(2, 2)
+    dst = np.asarray(dst, dtype=np.float64).reshape(2, 2)
+    first = src[1] - src[0]
+    second = dst[1] - dst[0]
+    length_s = float(np.hypot(first[0], first[1]))
+    length_d = float(np.hypot(second[0], second[1]))
+    if length_s < 8.0 or length_d < 8.0:
+        return None
+    scale = length_d / length_s
+    if not 0.85 <= scale <= 1.15:
+        return None
+    angle = math.degrees(math.atan2(second[1], second[0]) - math.atan2(first[1], first[0]))
+    rotated = _matrix(angle, scale, 0.0, 0.0)
+    mapped = _apply(rotated, src[0].reshape(1, 2))[0]
+    matrix = _matrix(angle, scale, float(dst[0][0] - mapped[0]), float(dst[0][1] - mapped[1]))
+    if not _similarity_ok(matrix):
+        return None
+    return matrix
+
+
+def _fiducial_votes(reference_fiducials, query_fiducials) -> list[np.ndarray]:
+    refs = list(reference_fiducials or [])
+    queries = list(query_fiducials or [])
+    if not refs or not queries:
+        return []
+    found: list[np.ndarray] = []
+
+    def _add(matrix: np.ndarray | None) -> None:
+        if matrix is None:
+            return
+        if any(_pose_close(matrix, other, translation_px=6.0, angle_deg=3.0) for other in found):
+            return
+        found.append(matrix)
+
+    if len(refs) >= 2 and len(queries) >= 2:
+        for left_i, first in enumerate(refs):
+            for left_j, second in enumerate(refs):
+                if left_j <= left_i:
+                    continue
+                for right_i, third in enumerate(queries):
+                    if not _fiducial_compatible(first, third):
+                        continue
+                    for right_j, fourth in enumerate(queries):
+                        if right_j == right_i or not _fiducial_compatible(second, fourth):
+                            continue
+                        _add(
+                            _similarity_from_two_points(
+                                (first.get("xy"), second.get("xy")),
+                                (third.get("xy"), fourth.get("xy")),
+                            )
+                        )
+    for left in refs:
+        for right in queries:
+            if not _fiducial_compatible(left, right):
+                continue
+            src = np.asarray(left.get("xy"), dtype=np.float64).reshape(2)
+            dst = np.asarray(right.get("xy"), dtype=np.float64).reshape(2)
+            _add(_matrix(0.0, 1.0, float(dst[0] - src[0]), float(dst[1] - src[1])))
+    return found
+
+
 def is_periodic_lattice(points: np.ndarray) -> bool:
+
     """True for a regular 2D via/pad grid. A single column or a jittered field is not."""
     pts = np.asarray(points, dtype=np.float64).reshape(-1, 2)
     if len(pts) < 8:
@@ -278,7 +543,8 @@ def is_periodic_lattice(points: np.ndarray) -> bool:
     if float(np.std(nearest) / pitch) > 0.08:
         return False
     span = pts.max(axis=0) - pts.min(axis=0)
-    if float(span.min()) < 2.2 * pitch:
+    # Three rows (span = 2 * pitch) of a regular grid are still a lattice.
+    if float(span.min()) < 1.95 * pitch:
         return False
     neighbors = np.sum(distances <= pitch * 1.25, axis=1)
     return float(np.median(neighbors)) >= 2.0
@@ -351,18 +617,28 @@ def _evaluate(reference, query, matrix, accept_px, conflict_px, snapped) -> Alig
         if _inside(inverse, element.centroid, reference.width, reference.height)
     ]
     distances: dict[str, list[float]] = {kind: [] for kind in ELEMENT_KINDS}
+    deltas: dict[str, list] = {kind: [] for kind in ELEMENT_KINDS}
+    desc_dists: dict[str, list] = {kind: [] for kind in ELEMENT_KINDS}
     matched_points: list[np.ndarray] = []
     hits_by_kind = {kind: 0 for kind in ELEMENT_KINDS}
     for element in ref_red:
         if element.partial and element.kind in PRIMARY_KINDS:
             continue
         pool = [other for other in query_red if other.kind == element.kind]
-        distance = _nearest_distance(element, pool, matrix)
+        if element.kind in SECONDARY_KINDS:
+            partners = _secondary_partners(element, pool, matrix)
+        else:
+            partners = [other for other in pool if _descriptor_compatible(element, other)]
+        # Only score pairs that look like the same primitive. Unmatched noisy
+        # blobs on a real photo are not a seam disagreement.
+        distance = _nearest_distance(element, partners, matrix)
         if distance is None:
-            if element.kind in PRIMARY_KINDS and not element.partial:
-                distances[element.kind].append(99.0)
             continue
         distances[element.kind].append(distance)
+        if element.kind in SECONDARY_KINDS and partners:
+            nearest = min(partners, key=lambda other: _centroid_distance(element, other, matrix))
+            deltas[element.kind].append(_pair_delta(element, nearest, matrix))
+            desc_dists[element.kind].append(_descriptor_distance(element, nearest))
         if distance <= accept_px:
             hits_by_kind[element.kind] = hits_by_kind.get(element.kind, 0) + 1
             if element.kind in PRIMARY_KINDS:
@@ -377,18 +653,48 @@ def _evaluate(reference, query, matrix, accept_px, conflict_px, snapped) -> Alig
         primary_state = "weak"
     elif primary_hits >= MIN_PRIMARY_HITS and residual <= accept_px:
         primary_state = "agree"
-    elif primary_hits < MIN_PRIMARY_HITS or residual >= conflict_px:
+    elif residual >= conflict_px and primary_hits < max(MIN_PRIMARY_HITS, int(0.5 * len(primary))):
+        # Compatible same-kind pairs exist, but they do not sit on this pose.
         primary_state = "conflict"
+    elif primary_hits < MIN_PRIMARY_HITS:
+        # A few close pairs and some leftovers is weak evidence, not a veto.
+        primary_state = "inconclusive"
     else:
         primary_state = "inconclusive"
     family_state = {
-        kind: _family_state(distances[kind], _SECONDARY_MIN[kind], accept_px, conflict_px)
+        kind: _family_state_secondary(
+            distances[kind],
+            deltas.get(kind, []),
+            accept_px,
+            conflict_px,
+            kind=kind,
+            desc_dists=desc_dists.get(kind, []),
+        )
         for kind in SECONDARY_KINDS
     }
     secondary_hits = sum(hits_by_kind[kind] for kind in SECONDARY_KINDS if family_state[kind] == "agree")
     lattice = primary_state == "agree" and is_periodic_lattice(np.asarray(matched_points, dtype=np.float64).reshape(-1, 2) if matched_points else np.zeros((0, 2)))
     agreed = [kind for kind, state in family_state.items() if state == "agree"]
     conflicts = [kind for kind, state in family_state.items() if state == "conflict"]
+    conflict_offsets = {
+        kind: [float(value) for value in distances[kind] if value >= conflict_px]
+        for kind in conflicts
+    }
+    # Looser text pairing (shape-compatible, no tight descriptor cut) so a
+    # shared silkscreen shift is visible even when one glyph's ink changed.
+    text_shift = []
+    for element in ref_red:
+        if element.kind != KIND_TEXT or element.partial:
+            continue
+        pool = [
+            other
+            for other in query_red
+            if other.kind == KIND_TEXT and not other.partial and _descriptor_compatible(element, other)
+        ]
+        distance = _nearest_distance(element, pool, matrix)
+        if distance is not None and 6.0 <= distance <= _SECONDARY_PAIR_PX:
+            text_shift.append(float(distance))
+    shift_offsets = {"text": text_shift}
     status = "lost"
     message = "weak element support"
     if conflicts:
@@ -416,11 +722,77 @@ def _evaluate(reference, query, matrix, accept_px, conflict_px, snapped) -> Alig
         secondary_hits=secondary_hits,
         hits_by_kind=hits_by_kind,
         snapped=snapped_ids,
+        conflict_offsets=conflict_offsets,
+        shift_offsets=shift_offsets,
         message=message,
     )
 
 
+def _pair_delta(element: BoardElement, other: BoardElement, matrix: np.ndarray) -> np.ndarray:
+    projected = _apply(matrix, np.asarray([element.centroid], dtype=np.float64))[0]
+    return projected - np.asarray(other.centroid, dtype=np.float64)
+
+
+def _offset_clustered(deltas: list, minimum: int, conflict_px: float, cluster_px: float = 14.0) -> bool:
+    """True when several pairs share one large, consistent shift."""
+    vectors = [np.asarray(item, dtype=np.float64).reshape(2) for item in deltas]
+    big = [item for item in vectors if float(np.linalg.norm(item)) >= conflict_px]
+    if len(big) < minimum:
+        return False
+    used = [False] * len(big)
+    for index, anchor in enumerate(big):
+        if used[index]:
+            continue
+        size = 1
+        used[index] = True
+        for other_index, other in enumerate(big):
+            if used[other_index]:
+                continue
+            if float(np.linalg.norm(anchor - other)) <= cluster_px:
+                used[other_index] = True
+                size += 1
+        if size >= minimum:
+            return True
+    return False
+
+
+def _family_state_secondary(
+    distances: list[float],
+    deltas: list,
+    accept_px: float,
+    conflict_px: float,
+    *,
+    kind: str = "",
+    desc_dists: list[float] | None = None,
+) -> str:
+    """Silkscreen disagreement is a shared shift of distinctive marks.
+
+    One leftover blob at a random offset is not enough to reject a still
+    whose pads already lock. A single far, tight letter match with no near
+    mate still counts, because a test plate may only show two glyphs and
+    extract one cleanly.
+    """
+    if len(distances) < 1:
+        return "absent"
+    agree = sum(value <= accept_px for value in distances)
+    if _offset_clustered(deltas, 2, conflict_px):
+        return "conflict"
+    desc_dists = list(desc_dists or [99.0] * len(distances))
+    if kind == KIND_TEXT and agree == 0 and not any(value <= 16.0 for value in distances):
+        far_tight = [
+            distance
+            for distance, desc in zip(distances, desc_dists)
+            if distance >= max(conflict_px, 24.0) and desc <= 0.75
+        ]
+        if far_tight:
+            return "conflict"
+    if agree >= 1:
+        return "agree"
+    return "inconclusive"
+
+
 def _family_state(distances: list[float], minimum: int, accept_px: float, conflict_px: float) -> str:
+
     if len(distances) < minimum:
         return "absent"
     agree = sum(value <= accept_px for value in distances)
@@ -603,17 +975,33 @@ def _primary_median(reference, query, matrix) -> float:
 
 def _vote_similarities(reference: BoardElementSet, query: BoardElementSet) -> list[np.ndarray]:
     """Typed translation votes. Holes and pads lead; text and outlines confirm."""
-    found: list[tuple[float, np.ndarray]] = []
+    general: list[tuple[float, np.ndarray]] = []
+    distinctive: list[tuple[float, np.ndarray]] = []
     angles = np.linspace(-16.0, 16.0, 9)
     for angle in angles:
         peaks = _translation_peaks(reference, query, float(angle))
-        for tx, ty, weight in peaks:
+        for item in peaks:
+            tx, ty, weight = item[0], item[1], item[2]
+            source = item[3] if len(item) > 3 else "all"
             matrix = _matrix(float(angle), 1.0, tx, ty)
-            if _similarity_ok(matrix):
-                found.append((weight, matrix))
-    found.sort(key=lambda item: item[0], reverse=True)
+            if not _similarity_ok(matrix):
+                continue
+            (distinctive if source == "distinctive" else general).append((weight, matrix, float(angle)))
+    general.sort(key=lambda item: item[0], reverse=True)
+    near_by: dict[float, list] = {}
+    far: list[tuple[float, np.ndarray, float]] = []
+    for item in distinctive:
+        if abs(item[2]) <= 4.0:
+            near_by.setdefault(item[2], []).append(item)
+        else:
+            far.append(item)
+    near: list = []
+    for group in near_by.values():
+        group.sort(key=lambda item: item[0], reverse=True)
+        near.extend(group[:8])
+    far.sort(key=lambda item: item[0], reverse=True)
     matrices = []
-    for _weight, matrix in found[:12]:
+    for _weight, matrix, *_rest in general[:8] + near + far[:4]:
         if any(_pose_close(matrix, other, translation_px=6.0, angle_deg=3.0) for other in matrices):
             continue
         matrices.append(matrix)
@@ -643,10 +1031,33 @@ def _translation_peaks(reference, query, angle: float) -> list[tuple[float, floa
         return []
     ranked = sorted(buckets.items(), key=lambda item: item[1], reverse=True)[:5]
     peaks = []
+    seen: set[tuple[int, int]] = set()
     for key, weight in ranked:
         if weight < 4.0:
             continue
         peaks.append((key[0] * cell, key[1] * cell, weight))
+        seen.add(key)
+    # Pad/via pairings in the non-overlap region can outvote a true modest
+    # overlap. Holes, text, and outlines are less periodic, so keep their
+    # own peaks too.
+    distinctive = {}
+    for kind in (KIND_HOLE, KIND_TEXT, KIND_OUTLINE):
+        refs = [element for element in reference.of_kind(kind) if not element.partial][:40]
+        queries = [element for element in query.of_kind(kind) if not element.partial][:40]
+        for left in refs:
+            rotated = rotation @ np.asarray(left.centroid, dtype=np.float64)
+            for right in queries:
+                if not _descriptor_compatible(left, right):
+                    continue
+                tx = float(right.centroid[0] - rotated[0])
+                ty = float(right.centroid[1] - rotated[1])
+                key = (int(round(tx / cell)), int(round(ty / cell)))
+                distinctive[key] = distinctive.get(key, 0.0) + weights[kind]
+    for key, weight in sorted(distinctive.items(), key=lambda item: item[1], reverse=True)[:8]:
+        if weight < 9.0 or key in seen:
+            continue
+        peaks.append((key[0] * cell, key[1] * cell, weight, "distinctive"))
+        seen.add(key)
     return peaks
 
 
@@ -681,6 +1092,32 @@ def _refine_similarity_from_matches(reference, query, matrix, accept_px) -> np.n
     if refined is None or not _similarity_ok(refined):
         return None
     return refined
+
+
+def _descriptor_distance(left: BoardElement, right: BoardElement) -> float:
+    a = np.asarray(left.descriptor, dtype=np.float64).ravel()
+    b = np.asarray(right.descriptor, dtype=np.float64).ravel()
+    if a.size == 0 or a.shape != b.shape:
+        return 99.0
+    return float(np.linalg.norm(a - b))
+
+
+def _secondary_partners(element: BoardElement, pool: list[BoardElement], matrix: np.ndarray) -> list[BoardElement]:
+    """Keep distinctive same-object candidates inside a modest shift radius."""
+    found = []
+    for other in pool:
+        if not _descriptor_compatible(element, other):
+            continue
+        # Two clipped fragments are not a reliable same-object pair.
+        if element.partial and other.partial:
+            continue
+        if _descriptor_distance(element, other) > _SECONDARY_DESC_MAX:
+            continue
+        distance = _nearest_distance(element, [other], matrix)
+        if distance is None or distance > _SECONDARY_PAIR_PX:
+            continue
+        found.append(other)
+    return found
 
 
 def _descriptor_compatible(left: BoardElement, right: BoardElement) -> bool:

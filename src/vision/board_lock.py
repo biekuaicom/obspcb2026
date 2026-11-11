@@ -50,6 +50,8 @@ class PoseEstimate:
         self.residual = float(residual)
         self.src_xy = np.zeros((0, 2), dtype=np.float64) if src_xy is None else np.asarray(src_xy, dtype=np.float64)
         self.dst_xy = np.zeros((0, 2), dtype=np.float64) if dst_xy is None else np.asarray(dst_xy, dtype=np.float64)
+        self.ncc = 0.0
+        self.area = 0
 
     @property
     def ok(self) -> bool:
@@ -168,7 +170,15 @@ def estimate_similarity_pose(
             src_xy=best["src_xy"],
             dst_xy=best["dst_xy"],
         )
-    return PoseEstimate("lost", hits=best["hits"], precision=best["precision"], residual=best["residual"])
+    return PoseEstimate(
+        "lost",
+        best["matrix"],
+        hits=best["hits"],
+        precision=best["precision"],
+        residual=best["residual"],
+        src_xy=best["src_xy"],
+        dst_xy=best["dst_xy"],
+    )
 
 
 def refine_pose_graph(poses: list[np.ndarray], constraints: list[tuple], *, iterations: int = 4) -> list[np.ndarray]:
@@ -277,6 +287,191 @@ def composite_registered_tile(
     mask[write] = 255
     residual_map[write] = float(residual_px)
     sharpness_map[write] = float(sharpness)
+
+
+
+# Photometric lock used on accepted stills when the pad/via constellation is
+# too noisy (real photos) but the two views still share unique texture.
+_FEATURE_MIN_INLIERS = 8
+_FEATURE_MIN_NCC = 0.45
+_FEATURE_MAX_ANGLE_DEG = 18.0
+
+
+def masked_ncc(library: np.ndarray, query: np.ndarray, matrix: np.ndarray, *, min_area: int = 4000, erode: int = 5) -> tuple[float, int]:
+    """Normalized correlation of ``library`` warped into ``query`` on the overlap."""
+    if library is None or query is None or library.size == 0 or query.size == 0:
+        return 0.0, 0
+    height, width = query.shape[:2]
+    matrix = np.asarray(matrix, dtype=np.float64)
+    warped = cv2.warpAffine(
+        library if library.ndim == 3 else cv2.cvtColor(library, cv2.COLOR_GRAY2BGR),
+        matrix,
+        (width, height),
+        flags=cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=(0, 0, 0),
+    )
+    mask = cv2.warpAffine(
+        np.full(library.shape[:2], 255, dtype=np.uint8),
+        matrix,
+        (width, height),
+        flags=cv2.INTER_NEAREST,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=0,
+    )
+    if erode > 0 and min(height, width) > erode + 2:
+        mask = cv2.erode(mask, np.ones((erode, erode), np.uint8), iterations=1)
+    both = mask > 0
+    area = int(np.count_nonzero(both))
+    if area < int(min_area):
+        return 0.0, area
+    left = cv2.cvtColor(warped, cv2.COLOR_BGR2GRAY) if warped.ndim == 3 else warped
+    right = cv2.cvtColor(query, cv2.COLOR_BGR2GRAY) if query.ndim == 3 else query
+    a = left[both].astype(np.float32)
+    b = right[both].astype(np.float32)
+    a -= float(a.mean())
+    b -= float(b.mean())
+    denom = float(np.sqrt(float((a * a).sum()) * float((b * b).sum())))
+    if denom < 1e-6:
+        return 0.0, area
+    return float((a * b).sum() / denom), area
+
+
+def extract_feature_pack(image: np.ndarray):
+    """CLAHE+ORB keypoints and descriptors for one still. Cached on accepted tiles."""
+    if image is None or image.size == 0:
+        return None
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) if image.ndim == 3 else image
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    equalized = clahe.apply(gray)
+    detector = cv2.ORB_create(nfeatures=2000, scaleFactor=1.2, nlevels=8, edgeThreshold=11, patchSize=31)
+    keypoints, desc = detector.detectAndCompute(equalized, None)
+    if desc is None or len(keypoints) < 8:
+        return None
+    return (keypoints, desc)
+
+
+def estimate_feature_pose(
+    library_bgr: np.ndarray,
+    query_bgr: np.ndarray,
+    *,
+    library_pack=None,
+    query_pack=None,
+) -> PoseEstimate:
+    """Similarity from a still onto the next still using CLAHE+ORB, scored by NCC.
+
+    Periodic via fields rarely give a unique, high-NCC lock. Real silkscreen,
+    packages, and connectors do. This is only for stills, not the live preview.
+    """
+    if library_bgr is None or query_bgr is None or library_bgr.size == 0 or query_bgr.size == 0:
+        return PoseEstimate("lost")
+    if library_pack is None:
+        library_pack = extract_feature_pack(library_bgr)
+    if query_pack is None:
+        query_pack = extract_feature_pack(query_bgr)
+    if library_pack is None or query_pack is None:
+        return PoseEstimate("lost")
+    keypoints_a, desc_a = library_pack
+    keypoints_b, desc_b = query_pack
+    if desc_a is None or desc_b is None or len(keypoints_a) < 8 or len(keypoints_b) < 8:
+        return PoseEstimate("lost")
+    matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=False)
+    raw = matcher.knnMatch(desc_a, desc_b, k=2)
+    good = []
+    for pair in raw:
+        if len(pair) < 2:
+            continue
+        first, second = pair
+        if first.distance < 0.80 * second.distance:
+            good.append(first)
+    if len(good) < 6:
+        return PoseEstimate("lost", hits=len(good))
+    src = np.float32([keypoints_a[item.queryIdx].pt for item in good])
+    dst = np.float32([keypoints_b[item.trainIdx].pt for item in good])
+    matrix, inlier_mask = cv2.estimateAffinePartial2D(
+        src,
+        dst,
+        method=cv2.RANSAC,
+        ransacReprojThreshold=3.5,
+        maxIters=4000,
+        confidence=0.99,
+    )
+    if matrix is None or inlier_mask is None:
+        return PoseEstimate("lost", hits=len(good))
+    keep = inlier_mask.ravel().astype(bool)
+    hits = int(keep.sum())
+    matrix = np.asarray(matrix, dtype=np.float64)
+    if hits < 4 or not _similarity_ok(matrix) or abs(_angle_of(matrix)) > _FEATURE_MAX_ANGLE_DEG:
+        estimate = PoseEstimate("lost", matrix, hits=hits)
+        return estimate
+    src_xy = np.asarray(src[keep], dtype=np.float64)
+    dst_xy = np.asarray(dst[keep], dtype=np.float64)
+    residual = _pair_residual(matrix, src_xy, dst_xy)
+    refined = _maybe_refine_feature(matrix, library_bgr, query_bgr)
+    if refined is not None:
+        matrix = refined
+        residual = _pair_residual(matrix, src_xy, dst_xy)
+        hits, _precision, residual, src_xy, dst_xy = _score_pose(
+            src_xy, dst_xy, matrix, int(query_bgr.shape[1]), int(query_bgr.shape[0]), thresh=3.5
+        ) if len(src_xy) else (hits, 0.0, residual, src_xy, dst_xy)
+    ncc, area = masked_ncc(library_bgr, query_bgr, matrix)
+    precision = float(hits) / float(max(len(good), 1))
+    min_area = max(4000, int(0.06 * query_bgr.shape[0] * query_bgr.shape[1]))
+    ok = (
+        hits >= _FEATURE_MIN_INLIERS
+        and ncc >= _FEATURE_MIN_NCC
+        and area >= min_area
+        and residual <= 3.5
+        and _similarity_ok(matrix)
+        and abs(_angle_of(matrix)) <= _FEATURE_MAX_ANGLE_DEG
+    )
+    estimate = PoseEstimate(
+        "ok" if ok else "lost",
+        matrix,
+        hits=hits,
+        precision=precision,
+        residual=residual,
+        src_xy=src_xy,
+        dst_xy=dst_xy,
+    )
+    estimate.ncc = float(ncc)
+    estimate.area = int(area)
+    return estimate
+
+
+def _maybe_refine_feature(matrix: np.ndarray, library: np.ndarray, query: np.ndarray) -> np.ndarray | None:
+    """A short Euclidean ECC nudge. Failures keep the ORB pose."""
+    left = cv2.cvtColor(library, cv2.COLOR_BGR2GRAY) if library.ndim == 3 else library
+    right = cv2.cvtColor(query, cv2.COLOR_BGR2GRAY) if query.ndim == 3 else query
+    scale = min(1.0, 320.0 / max(left.shape[0], left.shape[1], right.shape[0], right.shape[1]))
+    if scale < 0.999:
+        left = cv2.resize(left, (max(1, int(round(left.shape[1] * scale))), max(1, int(round(left.shape[0] * scale)))), interpolation=cv2.INTER_AREA)
+        right = cv2.resize(right, (max(1, int(round(right.shape[1] * scale))), max(1, int(round(right.shape[0] * scale)))), interpolation=cv2.INTER_AREA)
+        warp = np.array([[matrix[0, 0], matrix[0, 1], matrix[0, 2] * scale], [matrix[1, 0], matrix[1, 1], matrix[1, 2] * scale]], dtype=np.float32)
+    else:
+        warp = np.asarray(matrix, dtype=np.float32)
+    criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 1e-4)
+    try:
+        _score, warp = cv2.findTransformECC(
+            left.astype(np.float32),
+            right.astype(np.float32),
+            warp,
+            cv2.MOTION_EUCLIDEAN,
+            criteria,
+            None,
+            4,
+        )
+    except cv2.error:
+        return None
+    warp = np.asarray(warp, dtype=np.float64)
+    if scale < 0.999:
+        warp[0, 2] /= scale
+        warp[1, 2] /= scale
+    if not _similarity_ok(warp):
+        return None
+    if _translation_jump(matrix, warp) > 16.0 or _angle_jump(matrix, warp) > 2.5:
+        return None
+    return warp
 
 
 def _spacing_compatible(library_xy: np.ndarray, query_xy: np.ndarray) -> np.ndarray:
