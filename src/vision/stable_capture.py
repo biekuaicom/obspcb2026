@@ -1,11 +1,14 @@
 """Stable interval capture with red coverage tracking.
 
 Default mapping path: shoot only when the view is sharp and still, then keep
-the captured footprint stuck to the board. ``render()`` paints the red coverage
-union on the current live frame only. A constrained low-resolution color
-overview is fused after each accepted shot so a board-wide preview can be
-exported; that overview is not a full-resolution pixel canvas
-(``full_canvas`` stays false).
+the captured footprint stuck to the board. Live pose comes from geometric
+features in the first-tile frame, not from the color overview. ``render()``
+paints the union of already-captured regions on the current frame only.
+
+A constrained low-resolution color overview is placed after each accepted shot
+(``full_canvas`` stays false). Overlap is never averaged: a high alignment
+residual keeps the sharper tile or leaves a gap. Labels live in board
+coordinates and are drawn after the pose is solved.
 
 Video mosaic remains an optional bypass in ``vision.mosaic``.
 """
@@ -22,11 +25,19 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from vision.board_lock import (
+    SAFE_RESIDUAL_PX,
+    composite_registered_tile,
+    estimate_similarity_pose,
+    landmarks_from_snapshot,
+    refine_pose_graph,
+)
 from vision.structure_tree import extract_structure_tree
 from vision.topology import (
     SCHEMA_VERSION,
     ConstellationMatcher,
     GeometricLocalizer,
+    Pose2D,
     TopologyExtractor,
 )
 
@@ -36,6 +47,7 @@ _MOTION = "画面仍在移动，等待稳定"
 _NOT_STARTED = "请先点击开始"
 _NO_OVERLAP = "红区重叠不足，请退回重拍"
 _LOST = "未能跟上已拍区域，请退回红色覆盖处重拍"
+_UNCERTAIN = "位姿还不确定，请放慢一点，或稍微退回已拍区域"
 _ACCEPTED = "已拍摄"
 _READY = "稳定，可以拍摄"
 _READY_OVERLAP = "重叠足够，可以拍摄"
@@ -129,6 +141,9 @@ class _Tile:
     edge_before: np.ndarray | None = None
     edge_after: np.ndarray | None = None
     structure: object | None = None
+    landmarks: np.ndarray | None = None
+    align_residual_px: float = 0.0
+    sharpness: float = 0.0
 
 
 @dataclass
@@ -223,6 +238,12 @@ class StableCaptureSession:
         self._overview_version = 0
         self.overview_refine_count = 0
         self._coverage_memory: CoverageMemory | None = None
+        self._overview_residual: np.ndarray | None = None
+        self._overview_sharpness: np.ndarray | None = None
+        self._track_note = ""
+        self._lock_residual = 0.0
+        self._ref_to_frame: np.ndarray | None = None
+        self._annotations: list[dict] = []
 
     def start(self) -> None:
         self.started = True
@@ -252,6 +273,12 @@ class StableCaptureSession:
         self._overview_version = 0
         self.overview_refine_count = 0
         self._coverage_memory = None
+        self._overview_residual = None
+        self._overview_sharpness = None
+        self._track_note = ""
+        self._lock_residual = 0.0
+        self._ref_to_frame = None
+        self._annotations = []
 
     def observe(self, frame: np.ndarray) -> ObserveState:
         sharpness = frame_sharpness(frame)
@@ -280,7 +307,7 @@ class StableCaptureSession:
             self._track_union(frame)
             if self.started and sharp and motion is not None and motion <= self.max_motion_px:
                 if not self._tracked:
-                    message = _LOST
+                    message = self._track_note or _LOST
                 elif float(self._overlap or 0.0) < self.min_overlap:
                     message = _NO_OVERLAP
                 else:
@@ -315,7 +342,7 @@ class StableCaptureSession:
             tile = self._store_tile(frame, None, None)
             return CaptureDecision(True, _ACCEPTED, overlap=None, tile_id=tile.tile_id)
         if not self._tracked or self._pose is None or not self._pose.ok or self._anchor_id is None:
-            return self._reject(_LOST, overlap=self._overlap, elapsed_ms=self._track_ms or 0.0)
+            return self._reject(self._track_note or _LOST, overlap=self._overlap, elapsed_ms=self._track_ms or 0.0)
         overlap = float(self._overlap or 0.0)
         if overlap < self.min_overlap:
             return self._reject(_NO_OVERLAP, overlap=overlap, elapsed_ms=self._track_ms or 0.0)
@@ -329,6 +356,7 @@ class StableCaptureSession:
         if not coverage.ok:
             return self._reject(coverage.reason, overlap=overlap, elapsed_ms=self._track_ms or 0.0)
         tile = self._store_tile(frame, self._anchor_id, self._pose.M, coverage_check=coverage)
+        self._close_loops(tile)
         return CaptureDecision(
             True,
             _ACCEPTED,
@@ -378,6 +406,7 @@ class StableCaptureSession:
             "edges": self.edges,
             "rejects": self.rejects,
             "coverage_memory": None if self._coverage_memory is None else self._coverage_memory.to_dict(),
+            "annotations": self.board_annotations(),
             "structure_tree": [
                 None if getattr(tile, "structure", None) is None else tile.structure.to_dict()
                 for tile in self.tiles
@@ -416,33 +445,115 @@ class StableCaptureSession:
         return list(self._quads)
 
     def _track_union(self, frame: np.ndarray) -> None:
+        """Lock this frame to the board constellation and project every captured tile."""
         started = time.perf_counter()
         observed = self.extractor.extract(frame)
-        hypotheses = self._localize_anchors(observed)
+        structure = extract_structure_tree(frame)
+        query_xy, query_w = self._stack_cloud(observed.xy(), landmarks_from_snapshot(structure))
+        library_xy, library_w = self._board_cloud()
+        estimate = estimate_similarity_pose(
+            library_xy,
+            query_xy,
+            int(frame.shape[1]),
+            int(frame.shape[0]),
+            library_w=library_w,
+            query_w=query_w,
+        )
+        self._track_ms = (time.perf_counter() - started) * 1000.0
+        self._lock_residual = float(estimate.residual)
+        self._track_note = ""
+        self._ref_to_frame = None
         width = int(frame.shape[1])
         height = int(frame.shape[0])
-        primary, ref_to_frame = self._consensus_ref_to_frame(hypotheses, width, height)
-        self._track_ms = (time.perf_counter() - started) * 1000.0
-        if primary is None or ref_to_frame is None:
+        if estimate.status == "uncertain":
+            self._pose = None
+            self._track_note = _UNCERTAIN
+            return
+        if not estimate.ok:
             self._pose = None
             return
-        self.matcher.set_topology(primary.tile.extracted)
-        self._pose = replace(
-            primary.pose,
-            M=np.asarray(_compose_m(ref_to_frame, primary.tile.M_to_ref), dtype=np.float64),
+        ref_to_frame = np.asarray(estimate.matrix, dtype=np.float64)
+        anchor, anchor_to_frame = self._select_anchor(ref_to_frame, width, height)
+        if anchor is None or anchor_to_frame is None or alignment_rejected(anchor_to_frame):
+            self._pose = None
+            self._track_note = _UNCERTAIN
+            return
+        self.matcher.set_topology(anchor.extracted)
+        self._ref_to_frame = ref_to_frame
+        self._anchor_id = anchor.tile_id
+        self._pose = Pose2D(
+            M=np.asarray(anchor_to_frame, dtype=np.float64),
+            inliers=int(estimate.hits),
+            confidence=float(estimate.precision),
+            ok=True,
+            message="ok",
+            elapsed_ms=float(self._track_ms),
+            scale=float(np.linalg.norm(np.asarray(anchor_to_frame)[:, 0])),
+            angle_deg=pose_angle_deg(anchor_to_frame),
+            query_points=int(len(query_xy)),
+            pose_error_px=float(estimate.residual),
         )
-        self._anchor_id = primary.tile.tile_id
-        self._quads = self._verified_coverage_quads(
-            ref_to_frame,
-            observed,
-            width,
-            height,
-            primary_index=primary.index,
-        )
+        self._quads = [
+            project_tile_quad(_compose_m(ref_to_frame, tile.M_to_ref), tile.width, tile.height) for tile in self.tiles
+        ]
         self._quads = self._filter_quads_by_coverage_memory(self._quads, ref_to_frame, width, height)
         self._polygon = self._quads[-1] if self._quads else None
         self._overlap = union_overlap_ratio(self._quads, width, height)
         self._tracked = True
+
+    def _select_anchor(self, ref_to_frame: np.ndarray, width: int, height: int) -> tuple[_Tile | None, np.ndarray | None]:
+        """Prefer the previous tile when it still covers a modest part of the frame."""
+        best: _Tile | None = None
+        best_fraction = -1.0
+        best_matrix = None
+        previous = self.tiles[-1]
+        previous_matrix = _compose_m(ref_to_frame, previous.M_to_ref)
+        previous_fraction = frame_overlap_ratio(
+            project_tile_quad(previous_matrix, previous.width, previous.height),
+            width,
+            height,
+        )
+        if previous_fraction >= self.min_overlap:
+            return previous, previous_matrix
+        for tile in self.tiles:
+            matrix = _compose_m(ref_to_frame, tile.M_to_ref)
+            fraction = frame_overlap_ratio(project_tile_quad(matrix, tile.width, tile.height), width, height)
+            if fraction > best_fraction:
+                best = tile
+                best_fraction = fraction
+                best_matrix = matrix
+        return best, best_matrix
+
+    def _stack_cloud(self, points: np.ndarray, landmarks: np.ndarray | None, transform: np.ndarray | None = None):
+        chunks: list[np.ndarray] = []
+        weights: list[np.ndarray] = []
+        xy = np.asarray(points, dtype=np.float64).reshape(-1, 2) if points is not None and len(points) else np.zeros((0, 2))
+        if len(xy):
+            if transform is not None:
+                xy = _apply_m(transform, xy)
+            chunks.append(xy)
+            weights.append(np.ones(len(xy), dtype=np.float64))
+        marks = np.zeros((0, 2), dtype=np.float64) if landmarks is None else np.asarray(landmarks, dtype=np.float64).reshape(-1, 2)
+        if len(marks):
+            if transform is not None:
+                marks = _apply_m(transform, marks)
+            chunks.append(marks)
+            weights.append(np.full(len(marks), 4.0))
+        if not chunks:
+            return np.zeros((0, 2), dtype=np.float64), np.zeros(0, dtype=np.float64)
+        return np.vstack(chunks), np.concatenate(weights)
+
+    def _board_cloud(self):
+        chunks: list[np.ndarray] = []
+        weights: list[np.ndarray] = []
+        for tile in self.tiles:
+            xy, weight = self._stack_cloud(_tile_xy(tile), getattr(tile, "landmarks", None), tile.M_to_ref)
+            if len(xy):
+                chunks.append(xy)
+                weights.append(weight)
+        if not chunks:
+            return np.zeros((0, 2), dtype=np.float64), np.zeros(0, dtype=np.float64)
+        return np.vstack(chunks), np.concatenate(weights)
 
     def _localize_anchors(self, observed) -> list[_AnchorHypothesis]:
         """Score every usable tile localization; do not stop at the first ok pose."""
@@ -586,6 +697,9 @@ class StableCaptureSession:
             points=[point.to_dict() for point in extracted.points],
             extracted=extracted,
             structure=structure,
+            landmarks=landmarks_from_snapshot(structure),
+            align_residual_px=0.0 if parent is None else float(self._lock_residual),
+            sharpness=frame_sharpness(frame),
         )
         if parent is None or pose_m is None:
             tile.M_to_ref = _identity_m()
@@ -608,9 +722,10 @@ class StableCaptureSession:
                 }
             )
         corrected, edge_stats = compensate_board_edge(frame)
+        # Edge compensation is a preview only. The color tile stays in the same
+        # pixels as the geometric pose, otherwise pins and silkscreen shear.
         tile.corrected = np.ascontiguousarray(corrected).copy()
         tile.M_overview = np.asarray(tile.M_to_ref, dtype=np.float64).copy()
-        tile.binary = binary_lines(corrected)
         tile.edge_before = edge_stats.get("preview_before")
         tile.edge_after = edge_stats.get("preview_after")
         tile.edge_stats = {key: value for key, value in edge_stats.items() if not str(key).startswith("preview")}
@@ -741,7 +856,7 @@ class StableCaptureSession:
 
 
     def _tile_color(self, tile: _Tile) -> np.ndarray:
-        image = tile.corrected if tile.corrected is not None else tile.raw
+        image = tile.raw
         if image.ndim == 2:
             return cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         return image
@@ -811,6 +926,8 @@ class StableCaptureSession:
         width, height = size
         self._overview = np.zeros((height, width, 3), dtype=np.uint8)
         self._overview_mask = np.zeros((height, width), dtype=np.uint8)
+        self._overview_residual = np.full((height, width), 99.0, dtype=np.float32)
+        self._overview_sharpness = np.zeros((height, width), dtype=np.float32)
         self._overview_origin = (float(origin[0]), float(origin[1]))
         self._overview_scale = float(scale)
 
@@ -818,6 +935,8 @@ class StableCaptureSession:
         assert self._overview is not None and self._overview_mask is not None
         old = self._overview
         old_mask = self._overview_mask
+        old_residual = self._overview_residual
+        old_sharpness = self._overview_sharpness
         old_origin = self._overview_origin
         scale = self._overview_scale
         new_w, new_h = new_size
@@ -825,6 +944,8 @@ class StableCaptureSession:
         dy = int(round((old_origin[1] - new_origin[1]) * scale))
         canvas = np.zeros((new_h, new_w, 3), dtype=np.uint8)
         mask = np.zeros((new_h, new_w), dtype=np.uint8)
+        residual = np.full((new_h, new_w), 99.0, dtype=np.float32)
+        sharpness = np.zeros((new_h, new_w), dtype=np.float32)
         x0, y0 = max(0, dx), max(0, dy)
         sx0, sy0 = max(0, -dx), max(0, -dy)
         copy_w = min(old.shape[1] - sx0, new_w - x0)
@@ -832,8 +953,14 @@ class StableCaptureSession:
         if copy_w > 0 and copy_h > 0:
             canvas[y0 : y0 + copy_h, x0 : x0 + copy_w] = old[sy0 : sy0 + copy_h, sx0 : sx0 + copy_w]
             mask[y0 : y0 + copy_h, x0 : x0 + copy_w] = old_mask[sy0 : sy0 + copy_h, sx0 : sx0 + copy_w]
+            if old_residual is not None:
+                residual[y0 : y0 + copy_h, x0 : x0 + copy_w] = old_residual[sy0 : sy0 + copy_h, sx0 : sx0 + copy_w]
+            if old_sharpness is not None:
+                sharpness[y0 : y0 + copy_h, x0 : x0 + copy_w] = old_sharpness[sy0 : sy0 + copy_h, sx0 : sx0 + copy_w]
         self._overview = canvas
         self._overview_mask = mask
+        self._overview_residual = residual
+        self._overview_sharpness = sharpness
         self._overview_origin = (float(new_origin[0]), float(new_origin[1]))
 
     def _rebuild_overview(self, tiles: list[_Tile], scale: float) -> None:
@@ -883,42 +1010,25 @@ class StableCaptureSession:
             self._expand_overview(new_origin, new_size)
 
     def _blend_overview_tile(self, tile: _Tile) -> None:
+        """Place one tile. Overlap is copied from the better-aligned source, never averaged."""
         if self._overview is None or self._overview_mask is None:
             return
+        if self._overview_residual is None or self._overview_sharpness is None:
+            self._overview_residual = np.full(self._overview.shape[:2], 99.0, dtype=np.float32)
+            self._overview_sharpness = np.zeros(self._overview.shape[:2], dtype=np.float32)
         image = self._tile_color(tile)
         transform = _compose_m(self._world_to_overview(), self._overview_pose(tile))
-        height, width = image.shape[:2]
-        size = (self._overview.shape[1], self._overview.shape[0])
-        warped = cv2.warpAffine(
+        composite_registered_tile(
+            self._overview,
+            self._overview_mask,
+            self._overview_residual,
+            self._overview_sharpness,
             image,
             transform,
-            size,
-            flags=cv2.INTER_LINEAR,
-            borderMode=cv2.BORDER_CONSTANT,
-            borderValue=(0, 0, 0),
+            residual_px=float(getattr(tile, "align_residual_px", 0.0)),
+            sharpness=float(getattr(tile, "sharpness", 0.0)),
+            safe_residual_px=SAFE_RESIDUAL_PX,
         )
-        mask = cv2.warpAffine(
-            np.full((height, width), 255, dtype=np.uint8),
-            transform,
-            size,
-            flags=cv2.INTER_NEAREST,
-            borderMode=cv2.BORDER_CONSTANT,
-            borderValue=0,
-        )
-        if not np.any(mask):
-            return
-        existing = self._overview_mask > 0
-        incoming = mask > 0
-        new_area = incoming & ~existing
-        overlap = incoming & existing
-        distance = cv2.distanceTransform(mask, cv2.DIST_L2, 5)
-        alpha = np.clip(distance / float(max(1, self.overview_feather_px)), 0.0, 1.0)
-        alpha[new_area] = 1.0
-        if np.any(overlap):
-            alpha[overlap] = np.minimum(alpha[overlap], 0.55)
-        blended = self._overview.astype(np.float32) * (1.0 - alpha[..., None]) + warped.astype(np.float32) * alpha[..., None]
-        self._overview = np.clip(blended, 0, 255).astype(np.uint8)
-        self._overview_mask = np.where(incoming, np.uint8(255), self._overview_mask)
         self._overview_version += 1
 
     def _refine_overview_tile(self, tile: _Tile) -> None:
@@ -1012,11 +1122,167 @@ class StableCaptureSession:
         if planned_scale < self._overview_scale * 0.999:
             self._rebuild_overview(settled, planned_scale)
         self._grow_overview(bounds_raw, settled)
-        self._refine_overview_tile(tile)
         updated = self._world_bounds(self.tiles)
         if updated is not None:
             self._grow_overview(updated, settled)
         self._blend_overview_tile(tile)
+
+    def _close_loops(self, tile: _Tile) -> None:
+        """Match this shot to every overlapping earlier tile and refine one board frame."""
+        if len(self.tiles) < 2:
+            return
+        frame_xy, frame_w = self._stack_cloud(_tile_xy(tile), getattr(tile, "landmarks", None))
+        if len(frame_xy) < 4:
+            return
+        constraints: list[tuple] = []
+        matched: list[_Tile] = []
+        for index, earlier in enumerate(self.tiles[:-1]):
+            library_xy, library_w = self._stack_cloud(_tile_xy(earlier), getattr(earlier, "landmarks", None))
+            if len(library_xy) < 4:
+                continue
+            estimate = estimate_similarity_pose(
+                library_xy,
+                frame_xy,
+                tile.width,
+                tile.height,
+                library_w=library_w,
+                query_w=frame_w,
+            )
+            if not estimate.ok or len(estimate.src_xy) < 4:
+                continue
+            constraints.append((index, len(self.tiles) - 1, estimate.src_xy, estimate.dst_xy))
+            matched.append(earlier)
+        if not constraints:
+            return
+        solved = refine_pose_graph(
+            [np.asarray(item.M_to_ref, dtype=np.float64) for item in self.tiles],
+            constraints,
+        )
+        moved = False
+        for item, pose in zip(self.tiles, solved):
+            pose = np.asarray(pose, dtype=np.float64)
+            if float(np.max(np.abs(pose - item.M_to_ref))) > 0.75:
+                moved = True
+            item.M_to_ref = pose
+            item.M_overview = pose.copy()
+        if self.edges and self.edges[-1]["dst"] == tile.tile_id:
+            self._rewrite_edge_pose(self.edges[-1], tile)
+        primary = self.edges[-1]["src"] if self.edges else None
+        for earlier in matched:
+            if earlier.tile_id == primary:
+                continue
+            self._append_loop_edge(earlier, tile)
+        self._refresh_annotations()
+        self._rebuild_coverage_memory()
+        self._pose_after_capture(tile)
+        if moved:
+            self._rebuild_color_overview()
+            self.overview_refine_count += 1
+
+    def _rewrite_edge_pose(self, edge: dict, tile: _Tile) -> None:
+        source = next(item for item in self.tiles if item.tile_id == edge["src"])
+        relative = _compose_m(_invert_m(tile.M_to_ref), source.M_to_ref)
+        edge["M"] = np.asarray(relative, dtype=np.float64).round(6).tolist()
+        edge["M_to_ref"] = np.asarray(tile.M_to_ref, dtype=np.float64).round(6).tolist()
+        edge["angle_deg"] = round(pose_angle_deg(relative), 3)
+        edge["reflection"] = bool(linear_is_reflection(relative))
+
+    def _append_loop_edge(self, earlier: _Tile, tile: _Tile) -> None:
+        relative = _compose_m(_invert_m(tile.M_to_ref), earlier.M_to_ref)
+        quad_src = project_tile_quad(earlier.M_to_ref, earlier.width, earlier.height).astype(np.float32)
+        quad_dst = project_tile_quad(tile.M_to_ref, tile.width, tile.height).astype(np.float32)
+        area, _intersection = cv2.intersectConvexConvex(quad_src, quad_dst)
+        overlap = float(max(0.0, area) / float(max(1, tile.width * tile.height)))
+        self.edges.append(
+            {
+                "src": earlier.tile_id,
+                "dst": tile.tile_id,
+                "M": np.asarray(relative, dtype=np.float64).round(6).tolist(),
+                "M_to_ref": np.asarray(tile.M_to_ref, dtype=np.float64).round(6).tolist(),
+                "overlap": round(overlap, 4),
+                "angle_deg": round(pose_angle_deg(relative), 3),
+                "reflection": bool(linear_is_reflection(relative)),
+                "direction": "loop_closure",
+            }
+        )
+
+    def _rebuild_coverage_memory(self) -> None:
+        memory = None
+        for tile in self.tiles:
+            memory = build_coverage_memory(memory, tile.width, tile.height, tile.M_to_ref)
+        self._coverage_memory = memory
+
+    def _rebuild_color_overview(self) -> None:
+        bounds = self._world_bounds(self.tiles)
+        if bounds is None:
+            return
+        _planned, scale, _size = self._plan_overview(bounds)
+        self._rebuild_overview(self.tiles, scale)
+
+    def add_annotation(self, text: str, xy, *, tile_id: str | None = None) -> dict:
+        """Record a label in board coordinates. Does not paint it into a tile raster."""
+        local = (float(xy[0]), float(xy[1]))
+        if tile_id is None:
+            board = local
+            stored_tile = None
+            stored_local = None
+        else:
+            tile = next((item for item in self.tiles if item.tile_id == tile_id), None)
+            if tile is None:
+                raise KeyError(tile_id)
+            board_xy = _apply_m(tile.M_to_ref, np.array([local], dtype=np.float64))[0]
+            board = (float(board_xy[0]), float(board_xy[1]))
+            stored_tile = tile_id
+            stored_local = local
+        for item in self._annotations:
+            if item["text"] == str(text) and math.hypot(item["xy"][0] - board[0], item["xy"][1] - board[1]) <= 12.0:
+                return dict(item)
+        record = {
+            "text": str(text),
+            "xy": [round(board[0], 2), round(board[1], 2)],
+            "tile_id": stored_tile,
+            "xy_tile": None if stored_local is None else [round(stored_local[0], 2), round(stored_local[1], 2)],
+            "kind": "label",
+        }
+        self._annotations.append(record)
+        return dict(record)
+
+    def board_annotations(self) -> list[dict]:
+        self._refresh_annotations()
+        return [dict(item) for item in self._annotations]
+
+    def draw_annotations(self, image: np.ndarray, transform: np.ndarray | None = None) -> np.ndarray:
+        """Draw each board label once. The returned image is a copy; tiles stay untouched."""
+        canvas = image.copy()
+        if canvas.ndim == 2:
+            canvas = cv2.cvtColor(canvas, cv2.COLOR_GRAY2BGR)
+        matrix = _identity_m() if transform is None else np.asarray(transform, dtype=np.float64)
+        for item in self.board_annotations():
+            point = _apply_m(matrix, np.array([item["xy"]], dtype=np.float64))[0]
+            origin = (int(round(float(point[0]))), int(round(float(point[1]))))
+            cv2.putText(
+                canvas,
+                str(item["text"]),
+                origin,
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 255, 0),
+                1,
+                cv2.LINE_AA,
+            )
+        return canvas
+
+    def _refresh_annotations(self) -> None:
+        for item in self._annotations:
+            tile_id = item.get("tile_id")
+            local = item.get("xy_tile")
+            if not tile_id or not local:
+                continue
+            tile = next((entry for entry in self.tiles if entry.tile_id == tile_id), None)
+            if tile is None:
+                continue
+            board = _apply_m(tile.M_to_ref, np.array([local], dtype=np.float64))[0]
+            item["xy"] = [round(float(board[0]), 2), round(float(board[1]), 2)]
 
     def _reject(self, reason: str, overlap: float | None = None, elapsed_ms: float = 0.0) -> CaptureDecision:
         self.rejects.append({"reason": reason, "overlap": overlap})
@@ -1462,7 +1728,7 @@ def _align_coverage_masks(
     min_x = min(int(left_origin[0]), int(right_origin[0]))
     min_y = min(int(left_origin[1]), int(right_origin[1]))
     max_x = max(int(left_origin[0] + left.shape[1]), int(right_origin[0] + right.shape[1]))
-    max_y = max(int(left_origin[1] + left.shape[0]), int(right_origin[1] + right.shape[1]))
+    max_y = max(int(left_origin[1] + left.shape[0]), int(right_origin[1] + right.shape[0]))
     size = (max_x - min_x, max_y - min_y)
     left_aligned = _place_coverage_mask(left, left_origin, (min_x, min_y), size)
     right_aligned = _place_coverage_mask(right, right_origin, (min_x, min_y), size)
