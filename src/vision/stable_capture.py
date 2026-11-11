@@ -10,6 +10,11 @@ A constrained low-resolution color overview is placed after each accepted shot
 residual keeps the sharper tile or leaves a gap. Labels live in board
 coordinates and are drawn after the pose is solved.
 
+Accepted stills, and only those, are also split into typed elements. The red
+overlap must agree on pads or holes and, when both tiles show them, on text,
+outlines, or traces. Preview keeps painting the last locked red union and does
+not run that separation.
+
 Video mosaic remains an optional bypass in ``vision.mosaic``.
 """
 
@@ -32,6 +37,7 @@ from vision.board_lock import (
     landmarks_from_snapshot,
     refine_pose_graph,
 )
+from vision.elements import align_red_region, extract_board_elements
 from vision.structure_tree import extract_structure_tree
 from vision.topology import (
     SCHEMA_VERSION,
@@ -48,6 +54,7 @@ _NOT_STARTED = "请先点击开始"
 _NO_OVERLAP = "红区重叠不足，请退回重拍"
 _LOST = "未能跟上已拍区域，请退回红色覆盖处重拍"
 _UNCERTAIN = "位姿还不确定，请放慢一点，或稍微退回已拍区域"
+_ELEMENT_MISMATCH = "对位不一致，请重拍，或退回已拍区域"
 _ACCEPTED = "已拍摄"
 _READY = "稳定，可以拍摄"
 _READY_OVERLAP = "重叠足够，可以拍摄"
@@ -144,6 +151,7 @@ class _Tile:
     landmarks: np.ndarray | None = None
     align_residual_px: float = 0.0
     sharpness: float = 0.0
+    elements: object | None = None
 
 
 @dataclass
@@ -244,6 +252,7 @@ class StableCaptureSession:
         self._lock_residual = 0.0
         self._ref_to_frame: np.ndarray | None = None
         self._annotations: list[dict] = []
+        self.element_alignment = None
 
     def start(self) -> None:
         self.started = True
@@ -279,6 +288,7 @@ class StableCaptureSession:
         self._lock_residual = 0.0
         self._ref_to_frame = None
         self._annotations = []
+        self.element_alignment = None
 
     def observe(self, frame: np.ndarray) -> ObserveState:
         sharpness = frame_sharpness(frame)
@@ -355,7 +365,12 @@ class StableCaptureSession:
         )
         if not coverage.ok:
             return self._reject(coverage.reason, overlap=overlap, elapsed_ms=self._track_ms or 0.0)
-        tile = self._store_tile(frame, self._anchor_id, self._pose.M, coverage_check=coverage)
+        anchor = next(item for item in self.tiles if item.tile_id == self._anchor_id)
+        query_elements = self._check_red_elements(frame, anchor, self._pose.M)
+        verdict = self.element_alignment
+        if verdict is not None and verdict.status in {"disagree", "lattice_only"}:
+            return self._reject(_ELEMENT_MISMATCH, overlap=overlap, elapsed_ms=self._track_ms or 0.0)
+        tile = self._store_tile(frame, self._anchor_id, self._pose.M, coverage_check=coverage, elements=query_elements)
         self._close_loops(tile)
         return CaptureDecision(
             True,
@@ -400,6 +415,7 @@ class StableCaptureSession:
                     "image_size": {"width": tile.width, "height": tile.height},
                     "points": len(tile.points),
                     "M_to_ref": np.asarray(tile.M_to_ref, dtype=np.float64).round(6).tolist(),
+                    "elements": None if getattr(tile, "elements", None) is None else tile.elements.to_dict(),
                 }
                 for tile in self.tiles
             ],
@@ -684,6 +700,7 @@ class StableCaptureSession:
         parent: str | None,
         pose_m: np.ndarray | None,
         coverage_check: CoverageCheck | None = None,
+        elements=None,
     ) -> _Tile:
         extracted = self.extractor.extract(frame)
         extracted.board_id = f"cap-{len(self.tiles):03d}"
@@ -700,6 +717,7 @@ class StableCaptureSession:
             landmarks=landmarks_from_snapshot(structure),
             align_residual_px=0.0 if parent is None else float(self._lock_residual),
             sharpness=frame_sharpness(frame),
+            elements=elements if elements is not None else extract_board_elements(frame, max_long_edge=self.extractor.max_long_edge),
         )
         if parent is None or pose_m is None:
             tile.M_to_ref = _identity_m()
@@ -1283,6 +1301,24 @@ class StableCaptureSession:
                 continue
             board = _apply_m(tile.M_to_ref, np.array([local], dtype=np.float64))[0]
             item["xy"] = [round(float(board[0]), 2), round(float(board[1]), 2)]
+
+    def _check_red_elements(self, frame: np.ndarray, anchor: _Tile, pose_m: np.ndarray):
+        """Separate this still and compare it to the anchor inside the red overlap.
+
+        Preview tracking does not call this. A lattice, or a seam whose text,
+        outline, or traces miss the locked pose, rejects the shot.
+        """
+        query = extract_board_elements(frame, max_long_edge=self.extractor.max_long_edge)
+        reference = getattr(anchor, "elements", None)
+        if reference is None or not getattr(reference, "elements", None) or not query.elements:
+            self.element_alignment = None
+            return query
+        self.element_alignment = align_red_region(
+            reference,
+            query,
+            initial_pose=np.asarray(pose_m, dtype=np.float64),
+        )
+        return query
 
     def _reject(self, reason: str, overlap: float | None = None, elapsed_ms: float = 0.0) -> CaptureDecision:
         self.rejects.append({"reason": reason, "overlap": overlap})
@@ -1980,6 +2016,7 @@ def save_session(session: StableCaptureSession, out_dir: Path, *, board_id: str,
     for tile in session.tiles:
         cv2.imwrite(str(tiles_dir / f"{tile.tile_id}.png"), tile.raw)
         cv2.imwrite(str(tiles_dir / f"{tile.tile_id}-binary.png"), tile.binary)
+        _write_element_crops(tile, tiles_dir)
     if session.tiles and session._last is not None and session._polygon is not None:
         cv2.imwrite(str(out_dir / "coverage.png"), session.render(session._last))
     chain = session.chain_dict()
@@ -2013,6 +2050,23 @@ def save_session(session: StableCaptureSession, out_dir: Path, *, board_id: str,
     summary.update(overview_summary_fields(session, out_dir))
     (out_dir / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return summary
+
+
+def _write_element_crops(tile, tiles_dir: Path) -> None:
+    """Small patch per element. Later recognition reads these, not the whole board."""
+    elements = getattr(tile, "elements", None)
+    if elements is None:
+        return
+    folder = tiles_dir / "crops" / tile.tile_id
+    wrote = False
+    for element in elements.elements:
+        crop = getattr(element, "crop", None)
+        if crop is None or crop.size == 0:
+            continue
+        if not wrote:
+            folder.mkdir(parents=True, exist_ok=True)
+            wrote = True
+        cv2.imwrite(str(folder / f"{element.element_id}.png"), crop)
 
 
 def _settle(session: StableCaptureSession, frame: np.ndarray) -> ObserveState:
