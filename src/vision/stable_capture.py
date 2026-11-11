@@ -12,14 +12,16 @@ coordinates and are drawn after the pose is solved.
 
 Accepted stills, and only those, are also split into typed elements and
 corner fiducials. Each still is placed into the first-tile (or fiducial)
-board frame by type-to-type matching in the overlap: silkscreen, pads,
-holes, outlines, pins, traces, and color blocks. A periodic via lattice
-alone does not lock. If the red-overlap elements disagree, the shot is
+board frame by matching high-confidence typed anchors that sit in the
+overlap C region only: holes, pads, silkscreen, outlines, pins, and traces.
+Whole-image untyped ORB/SIFT is not the authority. A periodic via lattice
+alone does not lock. If the C-region anchors disagree, the shot is
 rejected and is never force-blended. Tiles may arrive out of order; a
 frame that does not fit the last shot can still lock to an earlier region.
-After each accepted shot, typed and fiducial constraints refine one global
-board frame so chain drift does not accumulate. Preview keeps painting the
-last locked red union and does not run that separation.
+After each accepted shot, every pair that shares a C region jointly
+adjusts one similarity board frame (田 / loop closure) so chain drift
+does not accumulate. Preview keeps painting the last locked red union and
+does not run that separation.
 
 Video mosaic remains an optional bypass in ``vision.mosaic``.
 """
@@ -44,7 +46,7 @@ from vision.board_lock import (
     extract_feature_pack,
     landmarks_from_snapshot,
     masked_ncc,
-    refine_pose_graph,
+    joint_align_c_region,
 )
 from vision.elements import (
     align_red_region,
@@ -52,7 +54,6 @@ from vision.elements import (
     estimate_typed_pose,
     extract_board_elements,
     fiducial_correspondences,
-    is_periodic_lattice,
     typed_correspondences,
     unique_landmark_support,
 )
@@ -591,7 +592,11 @@ class StableCaptureSession:
         return best, best_matrix
 
     def _feature_lock(self, frame: np.ndarray, width: int, height: int) -> dict | None:
-        """ORB+CLAHE pose against accepted stills, ranked by overlap NCC."""
+        """ORB+CLAHE pose against accepted stills, ranked by overlap NCC.
+
+        Not the production placement authority. Capture uses typed C-region
+        anchors; this helper stays available only as a diagnostic.
+        """
         if not self.tiles:
             return None
         query_pack = extract_feature_pack(frame)
@@ -659,11 +664,17 @@ class StableCaptureSession:
                 tile.elements = reference
             if reference is None or not getattr(reference, "elements", None):
                 continue
+            hint = None
+            if self._tracked and self._ref_to_frame is not None:
+                candidate = _compose_m(self._ref_to_frame, tile.M_to_ref)
+                if not alignment_rejected(candidate):
+                    hint = candidate
             result = estimate_typed_pose(
                 reference,
                 query_elements,
                 reference_fiducials=getattr(tile, "fiducials", None),
                 query_fiducials=query_fiducials,
+                initial_pose=hint,
             )
             if result.matrix is None or alignment_rejected(result.matrix):
                 continue
@@ -1437,25 +1448,16 @@ class StableCaptureSession:
             )
             if len(fid_src) >= 2:
                 return fid_src, fid_dst
-        # Untyped pad clouds are only used when the field is not a periodic lattice.
-        library_xy, library_w = self._stack_cloud(_tile_xy(earlier), getattr(earlier, "landmarks", None))
-        frame_xy, frame_w = self._stack_cloud(_tile_xy(later), getattr(later, "landmarks", None))
-        if len(library_xy) < 4 or len(frame_xy) < 4 or is_periodic_lattice(library_xy):
-            return None
-        estimate = estimate_similarity_pose(
-            library_xy,
-            frame_xy,
-            later.width,
-            later.height,
-            library_w=library_w,
-            query_w=frame_w,
-        )
-        if not estimate.ok or len(estimate.src_xy) < 4:
-            return None
-        return estimate.src_xy, estimate.dst_xy
+        # Joint adjustment uses typed C-region anchors only. Untyped pad
+        # clouds and ORB/SIFT are not a pose-graph authority.
+        return None
 
     def _close_loops(self, tile: _Tile) -> None:
-        """Match overlapping tiles by typed marks and refine one board frame."""
+        """Jointly align every tile that shares a C region in the first-tile frame.
+
+        Adjacent pairs and 田 crossings are all constraints. The graph is not
+        a chain of A→B→D→E. Tile 0 stays fixed; the rest stay similarities.
+        """
         if len(self.tiles) < 2:
             return
         constraints: list[tuple] = []
@@ -1485,7 +1487,7 @@ class StableCaptureSession:
                 self._rebuild_color_overview()
                 self.overview_refine_count += 1
             return
-        solved = refine_pose_graph(
+        solved = joint_align_c_region(
             [np.asarray(item.M_to_ref, dtype=np.float64) for item in self.tiles],
             constraints,
         )

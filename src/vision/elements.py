@@ -1,4 +1,4 @@
-"""Typed board-element separation and red-region seam checks.
+"""Typed board-element separation and C-region green-anchor alignment.
 
 Interval capture already locks a similarity from pad and via centroids. That
 lock does not look at silkscreen, outlines, or traces, so a repeated via
@@ -10,8 +10,10 @@ that runs on an accepted still, not on the live preview:
 2. A few conflict rules clean the set: a drill inside a pad stays a hole, a
    letter is not a trace, pins are the regular small pads along an outline.
 3. ``align_red_region`` solves a similarity (rotation, translation, a little
-   scale, no shear) so the shared red overlap coincides, then scores those
-   elements. Crops stay on each element for a later patch recognizer.
+   scale, no shear) from high-confidence typed anchors that sit in the
+   overlap C region only, then scores those elements. Crops stay on each
+   element for a later patch recognizer. Whole-image untyped keypoints are
+   not the authority: lookalike pads outside C do not vote for the pose.
 
 Acceptance rule
 ---------------
@@ -77,6 +79,12 @@ _KIND_CAP = {
     KIND_COLOR: 8,
 }
 _MAX_ELEMENTS = 160
+# Hypothesized overlap C-strip widths. Microscope stills keep about 10%.
+_C_STRIP_FRACTIONS = (0.10, 0.16, 0.22, 0.30, 0.42)
+_C_STRIP_PAIRS = (("right", "left"), ("left", "right"), ("bottom", "top"), ("top", "bottom"))
+# Wide same-view fallback only, never the authority when a modest C lock exists.
+_C_WIDE_FRACTIONS = (0.58, 0.78, 1.0)
+C_ANCHOR_KINDS = PRIMARY_KINDS + SECONDARY_KINDS
 
 
 @dataclass
@@ -268,6 +276,76 @@ def align_red_region(
     return _align_global(reference, query, accept_residual_px, conflict_residual_px)
 
 
+def c_region_band(width: int, height: int, side: str, fraction: float) -> tuple[int, int, int, int]:
+    """Axis-aligned strip on one side of a tile, used as a hypothesized C region."""
+    width = int(width)
+    height = int(height)
+    fraction = float(min(0.95, max(0.05, fraction)))
+    if side == "left":
+        return (0, 0, max(1, int(round(width * fraction))), height)
+    if side == "right":
+        band = max(1, int(round(width * fraction)))
+        return (max(0, width - band), 0, band, height)
+    if side == "top":
+        return (0, 0, width, max(1, int(round(height * fraction))))
+    if side == "bottom":
+        band = max(1, int(round(height * fraction)))
+        return (0, max(0, height - band), width, band)
+    raise ValueError(f"unknown C-region side: {side}")
+
+
+def elements_in_bbox(elements: BoardElementSet, bbox: tuple[int, int, int, int], *, pad: float = 2.0) -> list[BoardElement]:
+    """Typed marks whose centroids sit inside ``bbox``."""
+    if elements is None:
+        return []
+    x, y, w, h = bbox
+    found = []
+    for element in elements.elements:
+        cx, cy = element.centroid
+        if x - pad <= cx <= x + w + pad and y - pad <= cy <= y + h + pad:
+            found.append(element)
+    return found
+
+
+def implied_c_elements(reference: BoardElementSet, query: BoardElementSet, matrix: np.ndarray) -> tuple[list[BoardElement], list[BoardElement]]:
+    """Typed marks that fall in the overlap implied by a similarity (the C region)."""
+    matrix = np.asarray(matrix, dtype=np.float64)
+    try:
+        inverse = _invert(matrix)
+    except np.linalg.LinAlgError:
+        return [], []
+    ref_c = [
+        element
+        for element in reference.elements
+        if _inside(matrix, element.centroid, query.width, query.height)
+    ]
+    query_c = [
+        element
+        for element in query.elements
+        if _inside(inverse, element.centroid, reference.width, reference.height)
+    ]
+    return ref_c, query_c
+
+
+def similarity_from_c_anchors(src_xy: np.ndarray, dst_xy: np.ndarray) -> np.ndarray | None:
+    """Similarity (R, t, slight scale, no shear) from green anchors in the C region.
+
+    Four points are the figure-1 case. Two points already determine a similarity;
+    three or more are fitted with Umeyama. A shear or a large scale change is rejected.
+    """
+    src = np.asarray(src_xy, dtype=np.float64).reshape(-1, 2)
+    dst = np.asarray(dst_xy, dtype=np.float64).reshape(-1, 2)
+    if len(src) < 2 or len(src) != len(dst):
+        return None
+    if len(src) == 2:
+        matrix = _similarity_from_two_points(src, dst)
+    else:
+        matrix = _umeyama(src, dst)
+    if matrix is None or not _similarity_ok(matrix):
+        return None
+    return matrix
+
+
 def detect_fiducials(image: np.ndarray) -> list[dict]:
     """Copper-ring corner marks with a drilled hole. Ordinary pads and caps are ignored."""
     if not isinstance(image, np.ndarray) or image.size == 0:
@@ -338,42 +416,41 @@ def detect_fiducials(image: np.ndarray) -> list[dict]:
     return kept[:4]
 
 
-def estimate_typed_pose(reference: BoardElementSet, query: BoardElementSet, *, reference_fiducials=None, query_fiducials=None) -> AlignmentResult:
-    """Similarity from typed elements and corner fiducials. Does not snap partial outlines.
+def estimate_typed_pose(reference: BoardElementSet, query: BoardElementSet, *, reference_fiducials=None, query_fiducials=None, initial_pose=None) -> AlignmentResult:
+    """Similarity from typed C-region anchors and corner fiducials.
 
-    A via/pad lattice alone is not unique; callers should treat ``lattice_only``
-    as uncertain. Disagreement is not rewritten into an ok pose.
+    Does not snap partial outlines. Votes come from the overlap C region, not
+    from whole-image untyped keypoints. A via/pad lattice alone is not unique;
+    callers should treat ``lattice_only`` as uncertain. Disagreement is not
+    rewritten into an ok pose.
     """
     if reference is None or query is None or not reference.elements or not query.elements:
         return AlignmentResult("lost", _identity(), message="no elements")
-    candidates = _vote_similarities(reference, query)
+    candidates: list[np.ndarray] = []
+    if initial_pose is not None:
+        pose = np.asarray(initial_pose, dtype=np.float64)
+        if pose.shape == (2, 3) and _similarity_ok(pose):
+            candidates.append(pose)
+            for matrix in _vote_similarities(reference, query, initial_pose=pose, include_wide=False):
+                if all(not _pose_close(matrix, other, translation_px=8.0, angle_deg=3.0) for other in candidates):
+                    candidates.append(matrix)
+    for matrix in _vote_similarities(reference, query, include_wide=False):
+        if all(not _pose_close(matrix, other, translation_px=8.0, angle_deg=3.0) for other in candidates):
+            candidates.append(matrix)
     for matrix in _fiducial_votes(reference_fiducials, query_fiducials):
         if all(not _pose_close(matrix, other, translation_px=8.0, angle_deg=3.0) for other in candidates):
             candidates.append(matrix)
-    if not candidates:
-        return AlignmentResult("lost", _identity(), message="no typed candidate")
-    scored: list[AlignmentResult] = []
-    for matrix in candidates:
-        refined = _refine_similarity_from_matches(reference, query, matrix, ACCEPT_RESIDUAL_PX)
-        chosen = refined if refined is not None else matrix
-        scored.append(_evaluate(reference, query, chosen, ACCEPT_RESIDUAL_PX, CONFLICT_RESIDUAL_PX, snapped=[]))
-    ok = [item for item in scored if item.status == "ok"]
-    if ok:
-        ok.sort(key=lambda item: (item.secondary_hits, item.primary_hits, -item.residual), reverse=True)
-        return ok[0]
-    lattices = [item for item in scored if item.status == "lattice_only"]
-    if lattices:
-        lattices.sort(key=lambda item: (item.primary_hits, -item.residual), reverse=True)
-        return lattices[0]
-    disagreements = [item for item in scored if item.status == "disagree"]
-    if disagreements:
-        disagreements.sort(key=lambda item: (-item.residual, item.primary_hits), reverse=True)
-        best = disagreements[0]
-        # Keep a geometrically tight disagreeing pose; a random far vote is lost.
-        if best.residual <= CONFLICT_RESIDUAL_PX and best.primary_hits >= MIN_PRIMARY_HITS:
-            return best
-        return AlignmentResult("lost", best.matrix, residual=best.residual, message=best.message)
-    return AlignmentResult("lost", scored[0].matrix, message="weak element support")
+    scored_core = _score_pose_candidates(reference, query, candidates, ACCEPT_RESIDUAL_PX, CONFLICT_RESIDUAL_PX)
+    picked = _select_alignment(scored_core, tight_disagree=True)
+    if picked.status == "ok":
+        return picked
+    for matrix in _vote_similarities(reference, query, include_wide=True):
+        if all(not _pose_close(matrix, other, translation_px=8.0, angle_deg=3.0) for other in candidates):
+            candidates.append(matrix)
+    if len(candidates) == len(scored_core):
+        return picked
+    scored_all = _score_pose_candidates(reference, query, candidates, ACCEPT_RESIDUAL_PX, CONFLICT_RESIDUAL_PX)
+    return _select_alignment(scored_all, tight_disagree=True)
 
 
 def typed_correspondences(reference: BoardElementSet, query: BoardElementSet, matrix: np.ndarray, *, accept_px: float = ACCEPT_RESIDUAL_PX) -> tuple[np.ndarray, np.ndarray]:
@@ -543,8 +620,9 @@ def is_periodic_lattice(points: np.ndarray) -> bool:
     if float(np.std(nearest) / pitch) > 0.08:
         return False
     span = pts.max(axis=0) - pts.min(axis=0)
-    # Three rows (span = 2 * pitch) of a regular grid are still a lattice.
-    if float(span.min()) < 1.95 * pitch:
+    # Two rows (span = 1 * pitch) of a regular grid are still a lattice.
+    # A single column has a near-zero cross-axis span and is not.
+    if float(span.min()) < 0.95 * pitch:
         return False
     neighbors = np.sum(distances <= pitch * 1.25, axis=1)
     return float(np.median(neighbors)) >= 2.0
@@ -571,21 +649,41 @@ def _align_from_pose(reference, query, pose, accept_px, conflict_px) -> Alignmen
 
 
 def _align_global(reference, query, accept_px, conflict_px) -> AlignmentResult:
-    candidates = _vote_similarities(reference, query)
+    core = _vote_similarities(reference, query, include_wide=False)
+    scored_core = _score_pose_candidates(reference, query, core, accept_px, conflict_px, snap=True)
+    picked = _select_alignment(scored_core, tight_disagree=False)
+    if picked.status == "ok":
+        return picked
+    candidates = list(core)
+    for matrix in _vote_similarities(reference, query, include_wide=True):
+        if all(not _pose_close(matrix, other, translation_px=8.0, angle_deg=3.0) for other in candidates):
+            candidates.append(matrix)
+    if len(candidates) == len(core):
+        return picked
+    scored_all = _score_pose_candidates(reference, query, candidates, accept_px, conflict_px, snap=True)
+    return _select_alignment(scored_all, tight_disagree=False)
+
+
+def _score_pose_candidates(reference, query, candidates, accept_px, conflict_px, *, snap: bool = False) -> list[AlignmentResult]:
     scored: list[AlignmentResult] = []
     for matrix in candidates:
         refined = _refine_similarity_from_matches(reference, query, matrix, accept_px)
         chosen = refined if refined is not None else matrix
         result = _evaluate(reference, query, chosen, accept_px, conflict_px, snapped=[])
-        snapped_matrix, snapped_ids = _snap_partials(reference, query, result.matrix, accept_px)
-        if snapped_ids:
-            result = _evaluate(reference, query, snapped_matrix, accept_px, conflict_px, snapped=snapped_ids)
+        if snap:
+            snapped_matrix, snapped_ids = _snap_partials(reference, query, result.matrix, accept_px)
+            if snapped_ids:
+                result = _evaluate(reference, query, snapped_matrix, accept_px, conflict_px, snapped=snapped_ids)
         scored.append(result)
+    return scored
+
+
+def _select_alignment(scored: list[AlignmentResult], *, tight_disagree: bool) -> AlignmentResult:
     if not scored:
         return AlignmentResult("lost", _identity(), message="no typed candidate")
     ok = [item for item in scored if item.status == "ok"]
     if ok:
-        ok.sort(key=lambda item: (item.secondary_hits, item.primary_hits, -item.residual), reverse=True)
+        ok.sort(key=lambda item: (_unique_anchor_hits(item), item.secondary_hits, item.primary_hits, -item.residual), reverse=True)
         return ok[0]
     lattices = [item for item in scored if item.status == "lattice_only"]
     if lattices:
@@ -593,6 +691,12 @@ def _align_global(reference, query, accept_px, conflict_px) -> AlignmentResult:
         return lattices[0]
     disagreements = [item for item in scored if item.status == "disagree"]
     if disagreements:
+        if tight_disagree:
+            disagreements.sort(key=lambda item: (-item.residual, item.primary_hits), reverse=True)
+            best = disagreements[0]
+            if best.residual <= CONFLICT_RESIDUAL_PX and best.primary_hits >= MIN_PRIMARY_HITS:
+                return best
+            return AlignmentResult("lost", best.matrix, residual=best.residual, message=best.message)
         disagreements.sort(key=lambda item: item.primary_hits, reverse=True)
         return disagreements[0]
     return AlignmentResult("lost", scored[0].matrix, message="weak element support")
@@ -973,21 +1077,94 @@ def _primary_median(reference, query, matrix) -> float:
     return float(np.median(distances))
 
 
-def _vote_similarities(reference: BoardElementSet, query: BoardElementSet) -> list[np.ndarray]:
-    """Typed translation votes. Holes and pads lead; text and outlines confirm."""
-    general: list[tuple[float, np.ndarray]] = []
-    distinctive: list[tuple[float, np.ndarray]] = []
+def _vote_similarities(reference: BoardElementSet, query: BoardElementSet, initial_pose=None, *, include_wide: bool = True) -> list[np.ndarray]:
+    """Typed translation votes inside hypothesized or implied C regions.
+
+    Complementary edge strips stand in for the ~10% overlap when the pose is
+    unknown. Lookalike pads outside those strips do not vote. Distinctive
+    text, outlines, and holes may seed a pose; a wide same-view vote is only
+    a fallback after modest C-region candidates are collected.
+    """
     angles = np.linspace(-16.0, 16.0, 9)
-    for angle in angles:
-        peaks = _translation_peaks(reference, query, float(angle))
-        for item in peaks:
-            tx, ty, weight = item[0], item[1], item[2]
-            source = item[3] if len(item) > 3 else "all"
-            matrix = _matrix(float(angle), 1.0, tx, ty)
-            if not _similarity_ok(matrix):
+    c_region: list[tuple[float, np.ndarray, float]] = []
+    distinctive: list[tuple[float, np.ndarray, float]] = []
+    wide: list[tuple[float, np.ndarray, float]] = []
+
+    def _collect(bucket, keep_ref, keep_query, source: str, include_distinctive: bool) -> None:
+        for angle in angles:
+            peaks = _translation_peaks(
+                reference,
+                query,
+                float(angle),
+                reference_keep=keep_ref,
+                query_keep=keep_query,
+                include_distinctive=include_distinctive,
+            )
+            for item in peaks:
+                tx, ty, weight = item[0], item[1], item[2]
+                tag = item[3] if len(item) > 3 else source
+                matrix = _matrix(float(angle), 1.0, tx, ty)
+                if not _similarity_ok(matrix):
+                    continue
+                target = distinctive if tag == "distinctive" else bucket
+                target.append((weight, matrix, float(angle)))
+
+    if initial_pose is not None and _similarity_ok(np.asarray(initial_pose, dtype=np.float64)):
+        ref_c, query_c = implied_c_elements(reference, query, initial_pose)
+        if ref_c and query_c:
+            _collect(c_region, ref_c, query_c, "c", include_distinctive=True)
+    else:
+        for fraction in _C_STRIP_FRACTIONS:
+            for ref_side, query_side in _C_STRIP_PAIRS:
+                ref_band = c_region_band(reference.width, reference.height, ref_side, fraction)
+                query_band = c_region_band(query.width, query.height, query_side, fraction)
+                keep_ref = elements_in_bbox(reference, ref_band)
+                keep_query = elements_in_bbox(query, query_band)
+                if len(keep_ref) < 2 or len(keep_query) < 2:
+                    continue
+                _collect(c_region, keep_ref, keep_query, "c", include_distinctive=True)
+        # Unique marks may sit anywhere, but they only seed a pose. Evaluation
+        # still scores the implied C region, never the whole image.
+        seed_kinds = {KIND_HOLE, KIND_TEXT, KIND_OUTLINE}
+        _collect(
+            distinctive,
+            [element for element in reference.elements if element.kind in seed_kinds],
+            [element for element in query.elements if element.kind in seed_kinds],
+            "seed",
+            include_distinctive=True,
+        )
+        if include_wide:
+            for fraction in _C_WIDE_FRACTIONS:
+                inset = 0.0 if fraction >= 1.0 else max(0.0, 0.5 * (1.0 - fraction))
+                ref_box = (
+                    int(round(reference.width * inset)),
+                    int(round(reference.height * inset)),
+                    max(1, int(round(reference.width * min(1.0, fraction)))),
+                    max(1, int(round(reference.height * min(1.0, fraction)))),
+                )
+                query_box = (
+                    int(round(query.width * inset)),
+                    int(round(query.height * inset)),
+                    max(1, int(round(query.width * min(1.0, fraction)))),
+                    max(1, int(round(query.height * min(1.0, fraction)))),
+                )
+                keep_ref = elements_in_bbox(reference, ref_box)
+                keep_query = elements_in_bbox(query, query_box)
+                if len(keep_ref) < 2 or len(keep_query) < 2:
+                    continue
+                _collect(wide, keep_ref, keep_query, "wide", include_distinctive=False)
+
+    def _dedupe(items, limit: int) -> list[np.ndarray]:
+        items = sorted(items, key=lambda item: item[0], reverse=True)
+        matrices: list[np.ndarray] = []
+        for _weight, matrix, _angle in items:
+            if any(_pose_close(matrix, other, translation_px=6.0, angle_deg=3.0) for other in matrices):
                 continue
-            (distinctive if source == "distinctive" else general).append((weight, matrix, float(angle)))
-    general.sort(key=lambda item: item[0], reverse=True)
+            matrices.append(matrix)
+            if len(matrices) >= limit:
+                break
+        return matrices
+
     near_by: dict[float, list] = {}
     far: list[tuple[float, np.ndarray, float]] = []
     for item in distinctive:
@@ -1000,24 +1177,51 @@ def _vote_similarities(reference: BoardElementSet, query: BoardElementSet) -> li
         group.sort(key=lambda item: item[0], reverse=True)
         near.extend(group[:8])
     far.sort(key=lambda item: item[0], reverse=True)
-    matrices = []
-    for _weight, matrix, *_rest in general[:8] + near + far[:4]:
+    matrices = _dedupe(c_region, 10)
+    for _weight, matrix, *_rest in near + far[:4]:
+        if any(_pose_close(matrix, other, translation_px=6.0, angle_deg=3.0) for other in matrices):
+            continue
+        matrices.append(matrix)
+    # Wide same-view votes come last and only fill seats the C-region left open.
+    for matrix in _dedupe(wide, 4):
         if any(_pose_close(matrix, other, translation_px=6.0, angle_deg=3.0) for other in matrices):
             continue
         matrices.append(matrix)
     return matrices
 
 
-def _translation_peaks(reference, query, angle: float) -> list[tuple[float, float, float]]:
+def vote_c_region_similarities(reference: BoardElementSet, query: BoardElementSet, initial_pose=None) -> list[np.ndarray]:
+    """Public C-region vote: complementary overlap strips or an implied C pose."""
+    return _vote_similarities(reference, query, initial_pose=initial_pose, include_wide=False)
+
+
+def _translation_peaks(
+    reference,
+    query,
+    angle: float,
+    *,
+    reference_keep=None,
+    query_keep=None,
+    include_distinctive: bool = True,
+) -> list[tuple[float, float, float]]:
     radians = math.radians(angle)
     cosine, sine = math.cos(radians), math.sin(radians)
     rotation = np.array([[cosine, -sine], [sine, cosine]], dtype=np.float64)
     buckets: dict[tuple[int, int], float] = {}
     cell = 6.0
     weights = {KIND_HOLE: 3.0, KIND_PAD: 2.0, KIND_PIN: 2.0, KIND_TEXT: 3.0, KIND_OUTLINE: 3.0, KIND_TRACE: 1.5}
+    allowed_ref = None if reference_keep is None else {id(element) for element in reference_keep}
+    allowed_query = None if query_keep is None else {id(element) for element in query_keep}
+
+    def _select(store, kind, allowed):
+        items = [element for element in store.of_kind(kind) if not element.partial]
+        if allowed is not None:
+            items = [element for element in items if id(element) in allowed]
+        return items[:40]
+
     for kind, weight in weights.items():
-        refs = [element for element in reference.of_kind(kind) if not element.partial][:40]
-        queries = [element for element in query.of_kind(kind) if not element.partial][:40]
+        refs = _select(reference, kind, allowed_ref)
+        queries = _select(query, kind, allowed_query)
         for left in refs:
             rotated = rotation @ np.asarray(left.centroid, dtype=np.float64)
             for right in queries:
@@ -1037,13 +1241,14 @@ def _translation_peaks(reference, query, angle: float) -> list[tuple[float, floa
             continue
         peaks.append((key[0] * cell, key[1] * cell, weight))
         seen.add(key)
-    # Pad/via pairings in the non-overlap region can outvote a true modest
-    # overlap. Holes, text, and outlines are less periodic, so keep their
-    # own peaks too.
+    if not include_distinctive:
+        return peaks
+    # Holes, text, and outlines inside this C region are less periodic, so
+    # keep their own peaks too.
     distinctive = {}
     for kind in (KIND_HOLE, KIND_TEXT, KIND_OUTLINE):
-        refs = [element for element in reference.of_kind(kind) if not element.partial][:40]
-        queries = [element for element in query.of_kind(kind) if not element.partial][:40]
+        refs = _select(reference, kind, allowed_ref)
+        queries = _select(query, kind, allowed_query)
         for left in refs:
             rotated = rotation @ np.asarray(left.centroid, dtype=np.float64)
             for right in queries:
@@ -1133,10 +1338,18 @@ def _descriptor_compatible(left: BoardElement, right: BoardElement) -> bool:
     return True
 
 
+def _unique_anchor_hits(result: AlignmentResult) -> int:
+    """Holes, silkscreen, and outlines in C are stronger than a lookalike pad field."""
+    hits = result.hits_by_kind or {}
+    return int(hits.get(KIND_HOLE, 0) + hits.get(KIND_TEXT, 0) + hits.get(KIND_OUTLINE, 0))
+
+
 def _prefer(candidate: AlignmentResult, incumbent: AlignmentResult) -> bool:
     rank = {"ok": 3, "lattice_only": 2, "disagree": 1, "lost": 0}
     if rank.get(candidate.status, 0) != rank.get(incumbent.status, 0):
         return rank.get(candidate.status, 0) > rank.get(incumbent.status, 0)
+    if _unique_anchor_hits(candidate) != _unique_anchor_hits(incumbent):
+        return _unique_anchor_hits(candidate) > _unique_anchor_hits(incumbent)
     if candidate.secondary_hits != incumbent.secondary_hits:
         return candidate.secondary_hits > incumbent.secondary_hits
     if candidate.primary_hits != incumbent.primary_hits:

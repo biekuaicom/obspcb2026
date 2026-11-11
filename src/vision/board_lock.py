@@ -1,9 +1,9 @@
-"""Board-frame geometric lock, pose-graph loop closure, and non-blended overview.
+"""Board-frame geometric lock, C-region pose-graph loop closure, and non-blended overview.
 
-Live pose is a similarity (rotation, translation, and a small scale) from pads,
-vias, and rare landmarks into the first-tile frame. It does not read the color
-mosaic. Overlap pixels are never averaged: a high residual keeps the sharper
-tile or leaves the overlap untouched.
+Live preview pose is a cheap similarity into the first-tile frame. Accepted
+stills are placed by typed C-region anchors, then jointly adjusted so a 田
+grid cannot accumulate chain drift. Overlap pixels are never averaged: a high
+residual keeps the sharper tile or leaves the overlap untouched.
 """
 
 from __future__ import annotations
@@ -227,6 +227,17 @@ def refine_pose_graph(poses: list[np.ndarray], constraints: list[tuple], *, iter
                 continue
             solved[index] = matrix
     return solved
+
+
+def joint_align_c_region(poses: list[np.ndarray], constraints: list[tuple], *, iterations: int = 12) -> list[np.ndarray]:
+    """Jointly align tiles that share C-region green anchors.
+
+    This is the 田 / loop-closure step: every overlapping pair contributes
+    typed correspondences in the same first-tile frame, tile 0 stays fixed,
+    and the solve stays a similarity (rotation, translation, slight scale).
+    Chaining A→B→D→E alone is not enough; the cross constraints lock the grid.
+    """
+    return refine_pose_graph(poses, constraints, iterations=iterations)
 
 
 def composite_registered_tile(
