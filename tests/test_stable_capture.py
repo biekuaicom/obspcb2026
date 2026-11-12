@@ -373,6 +373,9 @@ def test_coverage_memory_rejects_bad_pose_on_capture_and_stays_unchanged():
     remembered = session.coverage_memory.area
     _settle(session, shifted)
     assert session._tracked is True and session._pose is not None
+    # Placement would otherwise correct this injected island pose. Disable it
+    # so the coverage gate is the path under test.
+    session._place_accepted_still = lambda *args, **kwargs: None
     anchor = next(tile for tile in session.tiles if tile.tile_id == session._anchor_id)
     desired = _translate_m(420, 18)
     inv_pose = _compose_m(_invert_m(anchor.M_to_ref), desired)
@@ -395,3 +398,76 @@ def test_coverage_memory_rejects_bad_pose_on_capture_and_stays_unchanged():
     assert "退回" in rejected_scale.reason
     assert len(session.tiles) == 1
     assert session.coverage_memory.area == remembered
+
+
+
+def _irregular_board(height=360, width=560, seed=5):
+    rng = np.random.default_rng(seed)
+    image = np.full((height, width), 176, np.uint8)
+    noise = rng.integers(-4, 5, size=image.shape, dtype=np.int16)
+    image = np.clip(image.astype(np.int16) + noise, 0, 255).astype(np.uint8)
+    for row, y in enumerate(range(28, height - 28, 22)):
+        for col, x in enumerate(range(28, width - 28, 24)):
+            px = int(np.clip(x + int(rng.integers(-5, 6)), 12, width - 12))
+            py = int(np.clip(y + int(rng.integers(-5, 6)), 12, height - 12))
+            if (row * 3 + col) % 4 == 0:
+                cv2.circle(image, (px, py), 4, 16, -1)
+            else:
+                cv2.rectangle(image, (px - 8, py - 3), (px + 8, py + 3), 28, -1)
+    return cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+
+
+def test_out_of_order_view_locks_to_an_earlier_tile():
+    """A still that does not fit the last tile can still lock to an earlier region."""
+    board = _irregular_board()
+    first = board[20:200, 20:260]
+    right = board[20:200, 220:460]
+    below = board[140:320, 20:260]
+    session = StableCaptureSession(min_overlap=0.08)
+    session.start()
+    _settle(session, first)
+    assert session.capture().ok is True
+    _settle(session, right)
+    assert session.capture().ok is True
+    _settle(session, below)
+    # Preview may lose the last (right-hand) tile. Placement must still use the first tile.
+    session._tracked = False
+    session._pose = None
+    session._anchor_id = None
+    session._track_note = "未能跟上已拍区域，请退回红色覆盖处重拍"
+    decision = session.capture()
+    assert decision.ok is True
+    assert len(session.tiles) == 3
+    assert abs(float(session.tiles[2].M_to_ref[0, 2]) - 0.0) < 6.0
+    assert abs(float(session.tiles[2].M_to_ref[1, 2]) - 120.0) < 6.0
+    assert session.edges[-1]["src"] in {"cap-000", "cap-001"}
+
+
+def test_shared_fiducial_is_pinned_in_the_board_frame():
+    from vision.elements import detect_fiducials
+
+    board = _irregular_board(height=320, width=480, seed=7)
+    cv2.circle(board, (90, 90), 36, (40, 180, 220), -1)
+    cv2.circle(board, (90, 90), 12, (18, 18, 18), -1)
+    first = board[20:200, 20:260]
+    second = board[20:200, 70:310]
+    assert detect_fiducials(first) and detect_fiducials(second)
+    session = StableCaptureSession(min_overlap=0.08)
+    session.start()
+    _settle(session, first)
+    assert session.capture().ok is True
+    _settle(session, second)
+    assert session.capture().ok is True
+    assert session.tiles[0].fiducials and session.tiles[1].fiducials
+    left = session.tiles[0].fiducials[0]["xy"]
+    right = session.tiles[1].fiducials[0]["xy"]
+    board_left = (
+        session.tiles[0].M_to_ref[0, 0] * left[0] + session.tiles[0].M_to_ref[0, 1] * left[1] + session.tiles[0].M_to_ref[0, 2],
+        session.tiles[0].M_to_ref[1, 0] * left[0] + session.tiles[0].M_to_ref[1, 1] * left[1] + session.tiles[0].M_to_ref[1, 2],
+    )
+    board_right = (
+        session.tiles[1].M_to_ref[0, 0] * right[0] + session.tiles[1].M_to_ref[0, 1] * right[1] + session.tiles[1].M_to_ref[0, 2],
+        session.tiles[1].M_to_ref[1, 0] * right[0] + session.tiles[1].M_to_ref[1, 1] * right[1] + session.tiles[1].M_to_ref[1, 2],
+    )
+    assert abs(board_left[0] - board_right[0]) < 3.0
+    assert abs(board_left[1] - board_right[1]) < 3.0
